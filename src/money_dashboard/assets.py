@@ -3,14 +3,18 @@ import pandas as pd
 import plotly.express as px
 import dash_mantine_components as dmc
 from dash.dash_table.Format import Format, Group, Scheme, Symbol
+from money_dashboard import gnucash_export
 
-df = pd.read_csv("gnucash_export.csv")
-df["Available Total"] = df.loc[
-    :, ["Savings & Investments", "Current Assets", "Share Schemes"]
-].sum(axis=1)
-df["Total"] = df.loc[:, "Savings & Investments":"Retirement"].sum(axis=1)
 
-df_latest = df.iloc[[0], 1:]
+def get_asset_values():
+    df = gnucash_export.get_assets_time_series()
+    df["Available Total"] = df.loc[:, ["Savings & Investments", "Current Assets", "Share Schemes"]].sum(axis=1)
+    df["Total"] = df.loc[:, "Savings & Investments":"Retirement"].sum(axis=1)
+    return df
+
+df_asset_values = get_asset_values()
+df_latest = df_asset_values.iloc[[0], 1:]
+
 money = Format(
     scheme=Scheme.fixed,
     precision=0,
@@ -28,7 +32,7 @@ column_format = [
         type="numeric",
         format=money,
     )
-    for i in df.columns
+    for i in df_asset_values.columns
 ][1:]
 
 
@@ -61,7 +65,7 @@ def _asset_checkboxgroup():
 
 
 def _asset_checkbox():
-    return [dmc.Checkbox(label=i, value=i) for i in df.columns][1:]
+    return [dmc.Checkbox(label=i, value=i) for i in df_asset_values.columns][1:]
 
 
 def _asset_tab():
@@ -87,5 +91,7 @@ def _asset_tab():
     Input(component_id="asset_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    fig = px.line(df, x="date", y=col_chosen)
+    fig = px.line(df_asset_values, x="date", y=col_chosen)
     return fig
+
+
