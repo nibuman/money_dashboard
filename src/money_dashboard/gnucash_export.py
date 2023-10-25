@@ -9,11 +9,17 @@ GNUCASH_STARTDATE = datetime.date(year=2018, month=1, day=1)
 book = piecash.open_book("/home/nick/Documents/Money/GnuCash/NB_accounts_2023.gnucash")
 root = book.root_account  # select the root_account
 
-assets = root.children(name="Assets")  # select child account by name
-savings = assets.children(name="Savings & Investments")
+
+def get_commodity_prices() -> pd.DataFrame:
+    return (
+        book.prices_df()
+        .assign(date=lambda df_: pd.to_datetime(df_.date))
+        .pivot_table(index="date", columns="commodity.mnemonic", values="value")
+    )
 
 
 def get_assets_time_series() -> pd.DataFrame:
+    assets = root.children(name="Assets")
     dates = get_time_series(relativedelta(months=1))
     asset_values = {"date": dates}
     asset_accounts = [acc.name for acc in assets.children if acc.get_balance(recurse=True) and not acc.hidden]

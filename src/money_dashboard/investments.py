@@ -4,25 +4,28 @@ import datetime
 import plotly.express as px
 import dash_mantine_components as dmc
 from dash.dash_table.Format import Format, Group, Scheme, Symbol
+from money_dashboard import gnucash_export
 
-df = (
-    pd.read_csv("gnucash_commodity_prices.csv")
-    .assign(date=lambda df_: pd.to_datetime(df_.date))
-    .pivot_table(index="date", columns="commodity.mnemonic", values="value")
-    .fillna(method="ffill")
-    .drop(columns=["EUR", "GBP"])
-)
-# df = df.loc[:, ["AZN", "BARC"]]
-df_latest = df.iloc[[-1], :]
-mask = df.index > datetime.datetime(2020, 1, 1)
-df = df.loc[mask]
-for col in df.columns:
-    base_price = df.loc[:, col].iloc[0]
-    df[col] = df[col] / base_price
-# base_price = df.loc[mask, "AZN"].iloc[0]
-# df_new["AZN"] = df_new["AZN"] / base_price
-# df_new.loc[mask]
+def get_commodity_prices():
+    return (gnucash_export.get_commodity_prices()
+        .ffill()
+        .drop(columns=["EUR", "GBP"])
+    )
 
+def get_latest_prices():
+    return df_prices.iloc[[-1], :]
+
+def normalise_prices(start_year: datetime.datetime, df_prices: pd.DataFrame):
+    mask = df_prices.index > start_year
+    df_prices = df_prices.loc[mask]
+    for col in df_prices.columns:
+        base_price = df_prices.loc[:, col].iloc[0]
+        df_prices[col] = df_prices[col] / base_price
+    return df_prices
+
+df_prices = get_commodity_prices()
+df_latest = get_latest_prices()
+df_normalised = normalise_prices(start_year=datetime.datetime(2020, 1, 1), df_prices=df_prices)
 
 money = Format(
     scheme=Scheme.fixed,
@@ -41,7 +44,7 @@ column_format = [
         type="numeric",
         format=money,
     )
-    for i in df.columns
+    for i in df_prices.columns
 ][1:]
 
 
@@ -71,7 +74,7 @@ def _investments_checkboxgroup():
 
 
 def _investments_checkbox():
-    return [dmc.Checkbox(label=i, value=i) for i in df.columns]
+    return [dmc.Checkbox(label=i, value=i) for i in df_prices.columns]
 
 
 def _investment_tab():
@@ -97,5 +100,5 @@ def _investment_tab():
     Input(component_id="investments_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    fig = px.line(df, x=df.index, y=col_chosen)
+    fig = px.line(df_normalised, x=df_normalised.index, y=col_chosen)
     return fig

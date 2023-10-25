@@ -12,6 +12,7 @@ def get_asset_values():
     df["Total"] = df.loc[:, "Savings & Investments":"Retirement"].sum(axis=1)
     return df
 
+
 df_asset_values = get_asset_values()
 df_latest = df_asset_values.iloc[[0], 1:]
 
@@ -93,5 +94,3 @@ def _asset_tab():
 def update_graph(col_chosen):
     fig = px.line(df_asset_values, x="date", y=col_chosen)
     return fig
-
-
