@@ -1,9 +1,9 @@
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
+import dash_mantine_components as dmc
 import pandas as pd
 import plotly.express as px
-import dash_mantine_components as dmc
-from dash.dash_table.Format import Format, Group, Scheme, Symbol
-from money_dashboard import gnucash_export
+from dash import Dash, Input, Output, callback, dash_table, dcc, html
+
+from money_dashboard import dash_format, gnucash_export
 
 
 def get_asset_values():
@@ -16,16 +16,7 @@ def get_asset_values():
 df_asset_values = get_asset_values()
 df_latest = df_asset_values.iloc[[0], 1:]
 
-money = Format(
-    scheme=Scheme.fixed,
-    precision=0,
-    group=Group.yes,
-    groups=3,
-    group_delimiter=" ",
-    decimal_delimiter=".",
-    symbol=Symbol.yes,
-    symbol_prefix="£",
-)
+money = dash_format.money_format(0)
 column_format = [
     dict(
         id=i,
