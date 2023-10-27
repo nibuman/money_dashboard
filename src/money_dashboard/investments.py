@@ -7,6 +7,7 @@ from dash import Dash, Input, Output, callback, dash_table, dcc, html
 
 from money_dashboard import gnucash_export, dash_format
 
+YEARS = [1,3,5]
 
 def get_commodity_prices():
     return gnucash_export.get_commodity_prices().ffill().drop(columns=["EUR", "GBP"])
@@ -58,7 +59,7 @@ def get_base_prices(year: datetime.datetime, df: pd.DataFrame, change_dy: int) -
 
 def get_commodity_data():
     df_commodity_data = latest_prices.copy()
-    for dy in [1, 3, 5]:
+    for dy in YEARS:
         start_year = datetime.datetime(year=2023 - dy, month=1, day=1)
         base_prices = get_base_prices(year=start_year, df=df_prices.copy(), change_dy=dy)
         df_commodity_data = df_commodity_data.merge(base_prices)
@@ -85,7 +86,13 @@ def _investment_performance_table():
         ],
         page_size=50,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change(['change_year3_percent', 'change_year5_percent', 'change_year1_percent'])
+        style_data_conditional=dash_format.conditional_format_percent_change([f'change_year{y}_percent' for y in YEARS]),
+        style_cell={
+            'height': 'auto',
+            # all three widths are needed
+            'minWidth': '70px', 'width': '70px', 'maxWidth': '180px',
+            'whiteSpace': 'normal'
+            }
     )
 
 
