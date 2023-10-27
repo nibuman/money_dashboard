@@ -58,16 +58,20 @@ def get_base_prices(year: datetime.datetime, df: pd.DataFrame, change_dy: int) -
     return df.loc[mask, :].iloc[0].T.reset_index().set_axis(["commodity", f"price_year{change_dy}"], axis=1)
 
 
-def get_commodity_data():
+def get_commodity_data(sort_col="year3_percent"):
     df_commodity_data = latest_prices.copy()
     for dy in YEARS:
         start_year = datetime.datetime(year=2023 - dy, month=1, day=1)
         base_prices = get_base_prices(year=start_year, df=df_prices.copy(), change_dy=dy)
         df_commodity_data = df_commodity_data.merge(base_prices)
-        df_commodity_data[f"change_year{dy}"] = df_commodity_data.latest_price / df_commodity_data[f"price_year{dy}"]
-        df_commodity_data[f"change_year{dy}_percent"] = (df_commodity_data[f"change_year{dy}"]) - 1
-        df_commodity_data[f"annualised{dy}_percent"] = (df_commodity_data[f"change_year{dy}"] ** (1 / dy)) - 1
-    commodity_dict = df_commodity_data.fillna(0).to_dict("records")
+        df_commodity_data[f"year{dy}"] = df_commodity_data.latest_price / df_commodity_data[f"price_year{dy}"]
+        df_commodity_data[f"year{dy}_percent"] = (df_commodity_data[f"year{dy}"]) - 1
+        df_commodity_data[f"annualised{dy}_percent"] = (df_commodity_data[f"year{dy}"] ** (1 / dy)) - 1
+    commodity_dict = (df_commodity_data
+                      .fillna(0)
+                      .sort_values(by=sort_col, ascending=False)
+                      .to_dict("records")
+    )
     return commodity_dict
 
 
@@ -75,10 +79,11 @@ def _investment_performance_table():
     return dash_table.DataTable(
         data=get_commodity_data(),
         columns=investment_performance_columns(),
+        id="investment_performance_table",
         page_size=50,
         style_table={"overflowX": "auto"},
         style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"change_year{y}_percent" for y in YEARS]
+            [f"year{y}_percent" for y in YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -100,7 +105,7 @@ def investment_performance_columns():
     for y in reversed(YEARS):
         returns.extend(
             [
-                {"id": f"change_year{y}_percent", "name": f"{y} Year Returns", "type": "numeric", "format": percent},
+                {"id": f"year{y}_percent", "name": f"{y} Year Returns", "type": "numeric", "format": percent},
                 {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
             ]
         )
@@ -114,15 +119,15 @@ def _investments_graph():
 def _investments_radiogroup():
     return dmc.RadioGroup(
         _investments_radios(),
-        id="investments_overview_checkboxes",
-        value="radio_year3",
+        id="investment_performance_radio",
+        value="radio_year3_percent",
         size="sm",
         orientation="horizontal",
     )
 
 
 def _investments_radios() -> list[dmc.Radio]:
-    radios = [dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}") for y in reversed(YEARS)]
+    radios = [dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(YEARS)]
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
 
@@ -145,10 +150,13 @@ def _investment_tab():
     ]
 
 
-@callback(
-    Output(component_id="investments_overview_graph", component_property="figure"),
-    Input(component_id="investments_overview_checkboxes", component_property="value"),
-)
-def update_graph(col_chosen):
-    fig = px.line(df_normalised, x=df_normalised.index, y=col_chosen)
-    return fig
+# @callback(
+#     Output(component_id="investments_overview_graph", component_property="figure"),
+#     Input(component_id="investments_overview_checkboxes", component_property="value"),
+# )
+# def update_graph(col_chosen):
+#     fig = px.line(df_normalised, x=df_normalised.index, y=col_chosen)
+#     return fig
+@callback(Output('investment_performance_table', 'data'), Input('investment_performance_radio', 'value'))
+def update_table(sort_col: str):
+    return get_commodity_data(sort_col.removeprefix("radio_"))
