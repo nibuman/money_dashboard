@@ -26,49 +26,41 @@ def percent_format(precision: int):
     )
 
 
-def conditional_format_percent_change(columns: list[str])->list[dict]:
+def conditional_format_percent_change(columns: list[str]) -> list[dict]:
     conditional = []
     for col in columns:
         conditional.append(
             {
-                'if': {
-                    'filter_query': '{{{col}}} < 0'.format(col=col),
-                    'column_id': col,
+                "if": {
+                    "filter_query": "{{{col}}} < 0".format(col=col),
+                    "column_id": col,
                 },
-                'color': 'tomato'
+                "color": "tomato",
             }
         )
         conditional.append(
             {
-                'if': {
-                    'filter_query': '{{{col}}} = 0'.format(col=col),
-                    'column_id': col,
+                "if": {
+                    "filter_query": "{{{col}}} = 0".format(col=col),
+                    "column_id": col,
                 },
-                'color': 'white'
+                "color": "white",
             }
         )
         conditional.append(
             {
-                'if': {
-                    'filter_query': '{{{col}}} > 0'.format(col=col),
-                    'column_id': col,
+                "if": {
+                    "filter_query": "{{{col}}} > 0".format(col=col),
+                    "column_id": col,
                 },
-                'color': 'green'
+                "color": "green",
             }
         )
     conditional.extend(
         [
-            {
-                'if': {'column_id': 'commodity'},
-                'width': '140px'
-                },
-            {
-                'if': {'column_id': 'commodity'},
-                'textAlign': 'left'
-                },
-                ]
+            {"if": {"column_id": "commodity"}, "width": "140px"},
+            {"if": {"column_id": "commodity"}, "textAlign": "left"},
+        ]
     )
 
     return conditional
-        
-    

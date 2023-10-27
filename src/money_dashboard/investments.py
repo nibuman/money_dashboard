@@ -7,7 +7,8 @@ from dash import Dash, Input, Output, callback, dash_table, dcc, html
 
 from money_dashboard import gnucash_export, dash_format
 
-YEARS = [1,3,5]
+YEARS = [1, 3, 5]
+
 
 def get_commodity_prices():
     return gnucash_export.get_commodity_prices().ffill().drop(columns=["EUR", "GBP"])
@@ -66,54 +67,64 @@ def get_commodity_data():
         df_commodity_data[f"change_year{dy}"] = df_commodity_data.latest_price / df_commodity_data[f"price_year{dy}"]
         df_commodity_data[f"change_year{dy}_percent"] = (df_commodity_data[f"change_year{dy}"]) - 1
         df_commodity_data[f"annualised{dy}_percent"] = (df_commodity_data[f"change_year{dy}"] ** (1 / dy)) - 1
-    commodity_dict = df_commodity_data.fillna(0).to_dict('records')
+    commodity_dict = df_commodity_data.fillna(0).to_dict("records")
     return commodity_dict
 
 
 def _investment_performance_table():
     return dash_table.DataTable(
         data=get_commodity_data(),
-        columns=[
-            {"id": "commodity", "name": "Commodity"},
-            {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money},
-            {"id": "change_year5_percent", "name": "5 Year (change)", "type": "numeric", "format": percent },
-            {"id": "annualised5_percent", "name": "5 Year (ann.)", "type": "numeric", "format": percent },
-            {"id": "change_year3_percent", "name": "3 Year (change)", "type": "numeric", "format": percent },
-            {"id": "annualised3_percent", "name": "3 Year (ann.)", "type": "numeric", "format": percent },
-            {'id': "change_year1_percent", "name": "1 Year (change)", "type" : "numeric", "format": percent},
-            {"id": "quantity", "name": "Quantity"},
-            {"id": "value", "name": "Value"},
-        ],
+        columns=investment_performance_columns(),
         page_size=50,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change([f'change_year{y}_percent' for y in YEARS]),
+        style_data_conditional=dash_format.conditional_format_percent_change(
+            [f"change_year{y}_percent" for y in YEARS]
+        ),
         style_cell={
-            'height': 'auto',
+            "height": "auto",
             # all three widths are needed
-            'minWidth': '70px', 'width': '70px', 'maxWidth': '180px',
-            'whiteSpace': 'normal'
-            }
+            "minWidth": "70px",
+            "width": "70px",
+            "maxWidth": "180px",
+            "whiteSpace": "normal",
+        },
     )
+
+
+def investment_performance_columns():
+    commodity = {"id": "commodity", "name": "Commodity"}
+    latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money}
+    quantity = {"id": "quantity", "name": "Quantity"}
+    value = {"id": "value", "name": "Value"}
+    returns = []
+    for y in reversed(YEARS):
+        returns.extend(
+            [
+                {"id": f"change_year{y}_percent", "name": f"{y} Year Returns", "type": "numeric", "format": percent},
+                {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
+            ]
+        )
+    return [commodity, latest, *returns, quantity, value]
 
 
 def _investments_graph():
     return dcc.Graph(figure={}, id="investments_overview_graph")
 
 
-def _investments_checkboxgroup():
-    return dmc.CheckboxGroup(
-        [*_investments_checkbox()],
+def _investments_radiogroup():
+    return dmc.RadioGroup(
+        _investments_radios(),
         id="investments_overview_checkboxes",
-        value=[
-            "AZN",
-        ],
+        value="radio_year3",
         size="sm",
-        orientation="vertical",
+        orientation="horizontal",
     )
 
 
-def _investments_checkbox():
-    return [dmc.Checkbox(label=i, value=i) for i in df_prices.columns]
+def _investments_radios() -> list[dmc.Radio]:
+    radios = [dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}") for y in reversed(YEARS)]
+    radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
+    return radios
 
 
 def _investment_tab():
@@ -123,9 +134,9 @@ def _investment_tab():
                 dmc.Title("Investments", color="blue", size="h3"),
                 dmc.Grid(
                     [
-                        dmc.Col([_investments_checkboxgroup()], span=2),
                         dmc.Col([_investments_graph()], span=8),
-                        dmc.Col([_investment_performance_table()], span=8),
+                        dmc.Col([_investments_radiogroup()], span=7),
+                        dmc.Col([_investment_performance_table()], span=7),
                     ]
                 ),
             ],
