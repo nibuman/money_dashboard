@@ -1,7 +1,8 @@
 import dash_mantine_components as dmc
 import plotly.express as px
+import numpy as np
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
-
+import plotly.graph_objects as go
 from money_dashboard import dash_format
 from money_dashboard.data import commodities, RETURNS_YEARS
 
@@ -46,6 +47,7 @@ def investment_performance_columns():
     quantity = {"id": "quantity", "name": "Quantity"}
     value = {"id": "value", "name": "Value", "type": "numeric", "format": money}
     returns = []
+    percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent}
     for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
@@ -53,13 +55,14 @@ def investment_performance_columns():
                 {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
             ]
         )
-    return [commodity, latest, *returns, quantity, value]
+    return [commodity, latest, *returns, quantity, value, percent_value]
 
 
 def _investments_graph():
-    return dcc.Graph(figure={}, id="investments_price_graph")
+    return dcc.Graph(figure=px.line(commodities.prices, x=commodities.prices.index, y="AZN"), id="investments_price_graph")
 
-
+def _investments_performance_graph():
+    return dcc.Graph(figure=px.bar(commodities.summary, x="value", y="commodity", title="Long-Form Input", orientation="h"), id="performance_bar_chart")
 def _investments_radiogroup():
     return dmc.RadioGroup(
         _investments_radios(),
@@ -83,9 +86,10 @@ def _investment_tab():
                 dmc.Title("Investments", color="blue", size="h3"),
                 dmc.Grid(
                     [
-                        dmc.Col([_investments_graph()], span=8),
+                        dmc.Col([_investments_graph()], span=7),
+                        dmc.Col([_investments_performance_graph()], span=5),
                         dmc.Col([_investments_radiogroup()], span=7),
-                        dmc.Col([_investment_performance_table()], span=7),
+                        dmc.Col([_investment_performance_table()], span=12),
                     ]
                 ),
             ],
@@ -108,7 +112,22 @@ def update_graph(active_cell):
     return fig
 
 
-@callback(Output("investment_performance_table", "data"), Input("investment_performance_radio", "value"))
+
+@callback(Output("investment_performance_table", "data"),
+          Input("investment_performance_radio", "value"))
 def update_table(sort_col: str):
     commodities.sort_summary(column=sort_col.removeprefix("radio_"))
     return commodities.summary.to_dict("records")
+
+@callback(Output("performance_bar_chart", "figure"),
+          Input("investment_performance_radio", "value"))
+def update_bar_chart(sort_col):
+    col = sort_col.removeprefix("radio_")
+    
+
+    commodities.sort_summary(column=sort_col.removeprefix("radio_"), sort_ascending=True)
+    bar_colours = np.where(commodities.summary[col] < 0, "red", "green")
+    fig =px.bar(commodities.summary, x=col, y="commodity", orientation="h", color=col, color_continuous_scale=['Crimson', 'OrangeRed' ,'PaleGreen','green'], color_continuous_midpoint=0 )
+    print(bar_colours)
+    return fig
+

@@ -51,6 +51,10 @@ class Commodities:
             df_summary[f"year{dy}"] = df_summary.latest_price / df_summary[f"price_year{dy}"]
             df_summary[f"year{dy}_percent"] = (df_summary[f"year{dy}"]) - 1
             df_summary[f"annualised{dy}_percent"] = (df_summary[f"year{dy}"] ** (1 / dy)) - 1
+        self.total_value = df_summary.value.sum(axis=0)
+        df_summary = (df_summary
+                      .assign(percent_value=df_summary.value / self.total_value)
+                      )
         active_mask = df_summary.quantity > 0
         return df_summary.loc[active_mask]
 
