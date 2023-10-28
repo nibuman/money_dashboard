@@ -4,18 +4,14 @@ import pandas as pd
 import piecash
 from dateutil.relativedelta import relativedelta
 
-GNUCASH_STARTDATE = datetime.date(year=2018, month=1, day=1)
+GNUCASH_STARTDATE = datetime.datetime(year=2018, month=1, day=1)
 
 book = piecash.open_book("/home/nick/Documents/Money/GnuCash/NB_accounts_2023.gnucash")
 root = book.root_account  # select the root_account
 
 
 def get_commodity_prices() -> pd.DataFrame:
-    return (
-        book.prices_df()
-        .assign(date=lambda df_: pd.to_datetime(df_.date))
-        .pivot_table(index="date", columns="commodity.mnemonic", values="value")
-    )
+    return book.prices_df()
 
 
 def get_assets_time_series() -> pd.DataFrame:
@@ -31,9 +27,12 @@ def get_assets_time_series() -> pd.DataFrame:
 
 
 def get_time_series(time_delta: relativedelta) -> list[datetime.date]:
-    current_date = datetime.datetime.now().date()
+    current_date = datetime.datetime.now()
     time_series = []
     while current_date >= GNUCASH_STARTDATE:
-        time_series.append(current_date)
+        time_series.append(current_date.date())
         current_date -= time_delta
     return time_series
+
+
+commodity_prices = get_commodity_prices()
