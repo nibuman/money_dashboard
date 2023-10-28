@@ -1,3 +1,6 @@
+"""Module to extract data from GnuCash. Gets the data into the simplest possible python standard
+data structure or DataFrame
+"""
 import datetime
 
 import pandas as pd
@@ -26,6 +29,21 @@ def get_assets_time_series() -> pd.DataFrame:
     return pd.DataFrame(asset_values)
 
 
+def get_commodity_quantities(account_section: str):
+    assets = root.children(name="Assets")
+    section = assets.children(name=account_section)
+    commodity_amounts = {}
+    for account in section.children:
+        for investment in account.children:
+            try:
+                commodity_amounts[investment.commodity.mnemonic] += investment.get_balance()
+            except KeyError:
+                commodity_amounts[investment.commodity.mnemonic] = investment.get_balance()
+    return pd.DataFrame(
+        dict(commodity=[k for k in commodity_amounts.keys()], quantity=[float(v) for v in commodity_amounts.values()])
+    )
+
+
 def get_time_series(time_delta: relativedelta) -> list[datetime.date]:
     current_date = datetime.datetime.now()
     time_series = []
@@ -33,6 +51,3 @@ def get_time_series(time_delta: relativedelta) -> list[datetime.date]:
         time_series.append(current_date.date())
         current_date -= time_delta
     return time_series
-
-
-commodity_prices = get_commodity_prices()

@@ -38,15 +38,15 @@ def conditional_format_percent_change(columns: list[str]) -> list[dict]:
                 "color": "tomato",
             }
         )
-        conditional.append(
-            {
-                "if": {
-                    "filter_query": "{{{col}}} = 0".format(col=col),
-                    "column_id": col,
-                },
-                "color": "white",
-            }
-        )
+        # conditional.append(
+        #     {
+        #         "if": {
+        #             "filter_query": "{{{col}}} = 0".format(col=col),
+        #             "column_id": col,
+        #         },
+        #         "color": "white",
+        #     }
+        # )
         conditional.append(
             {
                 "if": {

@@ -26,7 +26,9 @@ def _investment_performance_table():
         id="investment_performance_table",
         page_size=50,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change([f"year{y}_percent" for y in RETURNS_YEARS]),
+        style_data_conditional=dash_format.conditional_format_percent_change(
+            [f"year{y}_percent" for y in RETURNS_YEARS]
+        ),
         style_cell={
             "height": "auto",
             # all three widths are needed
@@ -42,7 +44,7 @@ def investment_performance_columns():
     commodity = {"id": "commodity", "name": "Commodity"}
     latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money}
     quantity = {"id": "quantity", "name": "Quantity"}
-    value = {"id": "value", "name": "Value"}
+    value = {"id": "value", "name": "Value", "type": "numeric", "format": money}
     returns = []
     for y in reversed(RETURNS_YEARS):
         returns.extend(

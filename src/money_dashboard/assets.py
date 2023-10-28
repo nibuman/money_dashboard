@@ -43,7 +43,7 @@ def _asset_graph():
 
 def _asset_checkboxgroup():
     return dmc.CheckboxGroup(
-        [*_asset_checkbox()],
+        _asset_checkbox(),
         id="asset_overview_checkboxes",
         value=[
             "Savings & Investments",
