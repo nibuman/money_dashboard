@@ -56,11 +56,11 @@ def conditional_format_percent_change(columns: list[str]) -> list[dict]:
                 "color": "green",
             }
         )
-    conditional.extend(
-        [
-            {"if": {"column_id": "commodity"}, "width": "140px"},
-            {"if": {"column_id": "commodity"}, "textAlign": "left"},
-        ]
-    )
+    # conditional.extend(
+    #     [
+    #         {"if": {"column_id": "commodity"}, "width": "140px"},
+    #         {"if": {"column_id": "commodity"}, "textAlign": "left"},
+    #     ]
+    # )
 
     return conditional

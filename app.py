@@ -1,5 +1,5 @@
 import dash_mantine_components as dmc
-from dash import Dash
+from dash import Dash, dcc
 
 from money_dashboard import assets, investments
 
@@ -19,6 +19,7 @@ app.layout = dmc.Tabs(
         dmc.TabsPanel(assets._asset_tab(), value="1"),
         dmc.TabsPanel(investments._investment_tab(), value="2"),
         dmc.TabsPanel("Retirement", value="3"),
+        dcc.Store(id='sorted_data')
     ],
     value="1",
 )
