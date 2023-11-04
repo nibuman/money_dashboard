@@ -39,6 +39,8 @@ def _investment_tab():
                         dmc.Col(_investments_performance_graph(), span=5),
                         dmc.Col(_investments_radiogroup(), span=7),
                         dmc.Col(_investment_performance_table(), span=11),
+                        dmc.Col(_investment_mix_bar(), span=7),
+                        dmc.Col(_investment_mix_pie(), span=5),
                     ]
                 ),
             ],
@@ -92,6 +94,8 @@ def investment_performance_columns():
     commodity = {"id": "commodity", "name": "Commodity"}
     latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money}
     quantity = {"id": "quantity", "name": "Quantity"}
+    identifier = {"id": "commodity_id", "name": "ISIN"}
+    ocf = {"id": "commodity_ocf", "name": "ocf"}
     value = {"id": "value", "name": "Value", "type": "numeric", "format": money}
     returns = []
     percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent}
@@ -102,7 +106,7 @@ def investment_performance_columns():
                 {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
             ]
         )
-    return [commodity, latest, *returns, quantity, value, percent_value]
+    return [commodity, latest, identifier, ocf, *returns, quantity, value, percent_value]
 
 
 #  Average returns table
@@ -183,6 +187,41 @@ def update_bar_chart(col):
         )
         fig.update_xaxes(tickformat=".0%")
     return fig
+
+
+# Investment mix bar chart
+
+
+def _investment_mix_bar():
+    return [
+        dcc.Graph(
+            figure=px.bar(
+                commodities.by_asset_type(),
+                x="commodity_type",
+                y=["type_value", "ideal_mix"],
+                title="Long-Form Input",
+                barmode="group",
+            ),
+            id="investment_mix_bar",
+        )
+    ]
+
+
+#  Investment mix pie chart
+
+
+def _investment_mix_pie():
+    return [
+        dcc.Graph(
+            figure=px.pie(
+                commodities.by_asset_type(),
+                names="commodity_type",
+                values="type_value",
+                title=f"Current mix. Total value = £{commodities.total_value:.0f}",
+            ),
+            id="investment_mix_pie",
+        )
+    ]
 
 
 #  Radio buttons

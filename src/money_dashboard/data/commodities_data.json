@@ -1,13 +1,24 @@
-{"commodities":[
-    {"name": "AstraZeneca PLC", "asset_type": "shares", "mnemonic": "AZN", "id": "AZN.L", "data_source": "yahoo", "sector": null},
-    {"name": "Barclays PLC", "asset_type": "shares", "mnemonic": "BARC", "id": "BARC.L", "data_source": "yahoo", "sector": null},
-    {"name": "Royal London UK Broad Equity Tilt Fund Class Z Accumulation", "asset_type": "funds", "mnemonic": "RLAAKA", "id": "GB00BPBJRB09", "data_source": "yahoo", "sector": "UK equity", "ocf": 0.11},
-    {"name": "Legal & General UK Property Fund C Class Accumulation", "asset_type": "funds", "mnemonic": "LGAAIJ", "id": "GB00BLM78D49", "data_source": null, "sector": "UK property", "ocf": 0.63},
-    {"name": "HSBC American Index C Acc", "asset_type": "funds", "mnemonic": "MDHAAJ", "id": "GB00B80QG615", "data_source": "yahoo", "sector": "US equity", "ocf": 0.06},
-    {"name": "L&G Active Sterling Corporate Bond I Acc", "asset_type": "funds", "mnemonic": "LGXITA", "id": "GB00B0CNHD88", "data_source": "yahoo", "sector": "global bonds", "ocf": 0.33},
-    {"name": "Scottish Mortgage Inv Trust", "asset_type": "funds", "mnemonic": "SMT", "id": "GB00BLDYK618", "data_source": "yahoo", "sector": "global equity", "ocf": 0.34},
-    {"name": "Vanguard FTSE Developed World ex-UK Equity Index Acc GBP", "asset_type": "funds", "mnemonic": "VVDVWE", "id": "GB00B59G4Q73", "data_source": "yahoo", "sector": "global equity", "ocf": 0.14},
-    {"name": "Jupiter Strategic Bond I Acc", "asset_type": "funds", "mnemonic": "RWAABC", "id": "GB00B4T6SD53", "data_source": "yahoo", "sector": "global bonds", "ocf": 0.73},
-    {"name": "L&G International Index Trust I Acc", "asset_type": "funds", "mnemonic": "LGITI", "id": "GB00B2Q6HW61", "data_source": "yahoo", "sector": "global equity", "ocf": 0.13}
-]
+{
+    "commodities":
+    [
+        {"name": "AstraZeneca PLC", "asset_type": "shares", "mnemonic": "AZN", "id": "AZN.L", "data_source": "yahoo"},
+        {"name": "Barclays PLC", "asset_type": "shares", "mnemonic": "BARC", "id": "BARC.L", "data_source": "yahoo"},
+        {"name": "Royal London UK Broad Equity Tilt Fund Class Z Accumulation", "asset_type": "UK equity", "mnemonic": "RLAAKA", "id": "GB00BPBJRB09", "data_source": "yahoo", "ocf": 0.11},
+        {"name": "Legal & General UK Property Fund C Class Accumulation", "asset_type": "UK property", "mnemonic": "LGAAIJ", "id": "GB00BLM78D49", "data_source": null, "ocf": 0.63},
+        {"name": "HSBC American Index C Acc", "asset_type": "US equity", "mnemonic": "MDHAAJ", "id": "GB00B80QG615", "data_source": "yahoo", "ocf": 0.06},
+        {"name": "L&G Active Sterling Corporate Bond I Acc", "asset_type": "global bonds", "mnemonic": "LGXITA", "id": "GB00B0CNHD88", "data_source": "yahoo", "ocf": 0.33},
+        {"name": "Scottish Mortgage Inv Trust", "asset_type": "global equity", "mnemonic": "SMT", "id": "GB00BLDYK618", "data_source": "yahoo", "ocf": 0.34},
+        {"name": "Vanguard FTSE Developed World ex-UK Equity Index Acc GBP", "asset_type": "global equity", "mnemonic": "VVDVWE", "id": "GB00B59G4Q73", "data_source": "yahoo", "ocf": 0.14},
+        {"name": "Jupiter Strategic Bond I Acc", "asset_type": "global bonds", "mnemonic": "RWAABC", "id": "GB00B4T6SD53", "data_source": "yahoo",  "ocf": 0.73},
+        {"name": "L&G International Index Trust I Acc", "asset_type": "global equity", "mnemonic": "LGITI", "id": "GB00B2Q6HW61", "data_source": "yahoo", "ocf": 0.13}
+    ],
+"investment_mix":
+    {
+        "UK equity"     : 0.18,
+        "UK property"   : 0.03,
+        "US equity"     : 0.24,
+        "global bonds"  : 0.20,
+        "global equity" : 0.15,
+        "shares"        : 0.20
+    }
 }

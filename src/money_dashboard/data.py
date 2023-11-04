@@ -6,7 +6,6 @@ import datetime
 import json
 from dataclasses import dataclass
 from typing import Optional
-
 from money_dashboard import gnucash_export
 
 START_DATE = datetime.datetime(year=2018, month=1, day=1)
@@ -40,7 +39,7 @@ class Commodities:
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
         self.summary = self._set_summary()
-        print(self.summary.to_dict("records"))
+        print(self.by_asset_type())
 
     @classmethod
     def from_gnucash(cls, commodities: pd.DataFrame, quantities: pd.DataFrame):
@@ -95,6 +94,19 @@ class Commodities:
     def sorted_summary(self, column: str, sort_ascending: bool = False):
         return self.summary.sort_values(by=column, ascending=sort_ascending).reset_index().drop(columns=["index"])
 
+    def by_asset_type(self):
+        return (
+            self.summary.groupby('commodity_type')
+            .agg(type_value=('value', sum))
+            .reset_index()
+            .merge(get_investment_mix_data())
+            .assign(
+                actual_percent=lambda df_: df_.type_value / self.total_value,
+                ideal_mix=lambda df_: df_.ideal_mix_percent * self.total_value,
+                change_required=lambda df_: df_.ideal_mix - df_.type_value,
+            )
+        )
+
 
 class Assets:
     def __init__(self) -> None:
@@ -103,6 +115,16 @@ class Assets:
 
 def get_commodity_data() -> list[dict]:
     return _load_data()["commodities"]
+
+
+def get_investment_mix_data() -> pd.DataFrame:
+    investment_mix = _load_data()["investment_mix"]
+    return pd.DataFrame(
+        {
+            "commodity_type": [commodity_type for commodity_type in investment_mix.keys()],
+            "ideal_mix_percent": [mix for mix in investment_mix.values()],
+        }
+    )
 
 
 def get_commodity(mnemonic: str) -> CommodityType:
@@ -125,6 +147,8 @@ def add_commodity_data(df_commodity: pd.DataFrame):
         mask = df_commodity.commodity.values == mnemonic
         df_commodity.loc[mask, "commodity_name"] = commodity.name
         df_commodity.loc[mask, "commodity_ocf"] = commodity.ocf
+        df_commodity.loc[mask, "commodity_type"] = commodity.asset_type
+        df_commodity.loc[mask, "commodity_id"] = commodity.id
 
     return df_commodity
 
@@ -133,4 +157,9 @@ all_commodities = [CommodityType(**c) for c in get_commodity_data()]
 commodities = Commodities.from_gnucash(
     gnucash_export.get_commodity_prices(),
     gnucash_export.get_commodity_quantities("Savings & Investments"),
+)
+
+retirement = Commodities.from_gnucash(
+    gnucash_export.get_commodity_prices(),
+    gnucash_export.get_commodity_quantities("Retirement"),
 )
