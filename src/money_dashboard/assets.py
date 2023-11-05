@@ -8,7 +8,7 @@ from money_dashboard import dash_format, gnucash_export
 
 def get_asset_values():
     df = gnucash_export.get_assets_time_series()
-    df["Available Total"] = df.loc[:, ["Savings & Investments", "Current Assets", "Share Schemes"]].sum(axis=1)
+    df["Available Total"] = df.loc[:, ["Savings & Investments", "Current Assets"]].sum(axis=1)
     df["Total"] = df.loc[:, "Savings & Investments":"Retirement"].sum(axis=1)
     return df
 

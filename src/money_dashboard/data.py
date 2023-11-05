@@ -33,16 +33,17 @@ def _load_data():
 
 
 class Commodities:
-    def __init__(self, commodity_prices: pd.DataFrame, quantities: pd.DataFrame) -> None:
+    def __init__(self, commodity_prices: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment") -> None:
         """commodity_prices: DataFrame with a datetime index and commodity names in the columns"""
         self.prices = commodity_prices
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
         self.summary = self._set_summary()
+        self.account = account
         print(self.by_asset_type())
 
     @classmethod
-    def from_gnucash(cls, commodities: pd.DataFrame, quantities: pd.DataFrame):
+    def from_gnucash(cls, commodities: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment"):
         """commodities: expects a DataFrame with a column for dates (date - as strings), commodity names
         (commmodity.mnemonic), and commodity prices (value)"""
         df = commodities.assign(date=lambda df_: pd.to_datetime(df_.date)).pivot_table(
@@ -50,7 +51,7 @@ class Commodities:
         )
         mask = df.index >= START_DATE
         df = df.loc[mask].ffill().drop(columns=["EUR", "GBP"]).sort_index()
-        return cls(df, quantities)
+        return cls(df, quantities, account)
 
     @property
     def latest_prices(self) -> pd.DataFrame:
@@ -99,7 +100,7 @@ class Commodities:
             self.summary.groupby('commodity_type')
             .agg(type_value=('value', sum))
             .reset_index()
-            .merge(get_investment_mix_data())
+            .merge(get_investment_mix_data(f"{self.account}_mix"))
             .assign(
                 actual_percent=lambda df_: df_.type_value / self.total_value,
                 ideal_mix=lambda df_: df_.ideal_mix_percent * self.total_value,
@@ -117,8 +118,8 @@ def get_commodity_data() -> list[dict]:
     return _load_data()["commodities"]
 
 
-def get_investment_mix_data() -> pd.DataFrame:
-    investment_mix = _load_data()["investment_mix"]
+def get_investment_mix_data(account: str = "investment_mix") -> pd.DataFrame:
+    investment_mix = _load_data()[account]
     return pd.DataFrame(
         {
             "commodity_type": [commodity_type for commodity_type in investment_mix.keys()],
@@ -157,9 +158,9 @@ all_commodities = [CommodityType(**c) for c in get_commodity_data()]
 commodities = Commodities.from_gnucash(
     gnucash_export.get_commodity_prices(),
     gnucash_export.get_commodity_quantities("Savings & Investments"),
+    "investment",
 )
 
 retirement = Commodities.from_gnucash(
-    gnucash_export.get_commodity_prices(),
-    gnucash_export.get_commodity_quantities("Retirement"),
+    gnucash_export.get_commodity_prices(), gnucash_export.get_commodity_quantities("Retirement"), "retirement"
 )

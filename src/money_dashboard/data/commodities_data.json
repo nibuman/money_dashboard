@@ -10,7 +10,13 @@
         {"name": "Scottish Mortgage Inv Trust", "asset_type": "global equity", "mnemonic": "SMT", "id": "GB00BLDYK618", "data_source": "yahoo", "ocf": 0.34},
         {"name": "Vanguard FTSE Developed World ex-UK Equity Index Acc GBP", "asset_type": "global equity", "mnemonic": "VVDVWE", "id": "GB00B59G4Q73", "data_source": "yahoo", "ocf": 0.14},
         {"name": "Jupiter Strategic Bond I Acc", "asset_type": "global bonds", "mnemonic": "RWAABC", "id": "GB00B4T6SD53", "data_source": "yahoo",  "ocf": 0.73},
-        {"name": "L&G International Index Trust I Acc", "asset_type": "global equity", "mnemonic": "LGITI", "id": "GB00B2Q6HW61", "data_source": "yahoo", "ocf": 0.13}
+        {"name": "L&G International Index Trust I Acc", "asset_type": "global equity", "mnemonic": "LGITI", "id": "GB00B2Q6HW61", "data_source": "yahoo", "ocf": 0.13},
+        {"name": "AZ L&G - Diversified", "asset_type": "diversified low risk", "mnemonic": "AZ Diversified", "id": "n/a", "data_source": null, "ocf": 0},
+        {"name": "AZ L&G - Drawdown", "asset_type": "equity accumulation", "mnemonic": "AZ Drawdown", "id": "n/a", "data_source": null, "ocf": 0},
+        {"name": "AZ Investment Account - Global Equity (Passive)", "asset_type": "equity accumulation", "mnemonic": "BGGE", "id": "n/a", "data_source": null, "ocf": 0},
+        {"name": "AZ Investment Account - Diversified (Active)", "asset_type": "diversified low risk", "mnemonic": "BGDA", "id": "n/a", "data_source": null, "ocf": 0}
+
+
     ],
 "investment_mix":
     {
@@ -20,5 +26,11 @@
         "global bonds"  : 0.20,
         "global equity" : 0.15,
         "shares"        : 0.20
+    },
+"retirement_mix":
+    {
+        "equity accumulation"  : 0.75,
+        "diversified low risk" : 0.25
     }
 }
+
