@@ -14,16 +14,18 @@
         {"name": "AZ L&G - Diversified", "asset_type": "diversified low risk", "mnemonic": "AZ Diversified", "id": "n/a", "data_source": null, "ocf": 0},
         {"name": "AZ L&G - Drawdown", "asset_type": "equity accumulation", "mnemonic": "AZ Drawdown", "id": "n/a", "data_source": null, "ocf": 0},
         {"name": "AZ Investment Account - Global Equity (Passive)", "asset_type": "equity accumulation", "mnemonic": "BGGE", "id": "n/a", "data_source": null, "ocf": 0},
-        {"name": "AZ Investment Account - Diversified (Active)", "asset_type": "diversified low risk", "mnemonic": "BGDA", "id": "n/a", "data_source": null, "ocf": 0}
+        {"name": "AZ Investment Account - Diversified (Active)", "asset_type": "diversified low risk", "mnemonic": "BGDA", "id": "n/a", "data_source": null, "ocf": 0},
+        {"name": "Royal London UK Core Equity Tilt Fund Z Accumulation", "asset_type": "UK equity", "mnemonic": "RLFTT", "id": "GB00B523MH29", "data_source": null, "ocf": 0.15}
+
 
 
     ],
 "investment_mix":
     {
-        "UK equity"     : 0.18,
+        "UK equity"     : 0.15,
         "UK property"   : 0.03,
-        "US equity"     : 0.24,
-        "global bonds"  : 0.20,
+        "US equity"     : 0.25,
+        "global bonds"  : 0.22,
         "global equity" : 0.15,
         "shares"        : 0.20
     },

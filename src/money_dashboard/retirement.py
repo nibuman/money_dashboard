@@ -9,6 +9,7 @@ from money_dashboard.data import retirement, RETURNS_YEARS
 
 money = dash_format.money_format(2)
 percent = dash_format.percent_format(1)
+percent_pos = dash_format.percent_format_pos(1)
 
 
 #  Tab layout
@@ -95,7 +96,12 @@ def retirement_performance_columns():
         returns.extend(
             [
                 # {"id": f"year{y}_percent", "name": f"{y} Year Returns", "type": "numeric", "format": percent},
-                {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
+                {
+                    "id": f"annualised{y}_percent",
+                    "name": f"{y} Year Annualised",
+                    "type": "numeric",
+                    "format": percent_pos,
+                },
             ]
         )
     return [commodity, latest, identifier, ocf, *returns, quantity, value, percent_value]
@@ -209,7 +215,8 @@ def _retirement_mix_pie():
                 retirement.by_asset_type(),
                 names="commodity_type",
                 values="type_value",
-                title=f"Current mix. Total value = £{retirement.total_value:.0f}",
+                title=f"Current mix. Total value = £{retirement.total_value:,.0f}",
+                hover_data="commodities",
             ),
             id="retirement_mix_pie",
         )

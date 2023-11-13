@@ -98,7 +98,10 @@ class Commodities:
     def by_asset_type(self):
         return (
             self.summary.groupby('commodity_type')
-            .agg(type_value=('value', sum))
+            .agg(
+                type_value=('value', sum),
+                commodities=('commodity', lambda x: ", ".join(x)),
+            )
             .reset_index()
             .merge(get_investment_mix_data(f"{self.account}_mix"))
             .assign(

@@ -7,7 +7,7 @@ def money_format(precision: int):
         precision=precision,
         group=Group.yes,
         groups=3,
-        group_delimiter=" ",
+        group_delimiter=",",
         decimal_delimiter=".",
         symbol=Symbol.yes,
         symbol_prefix="£",
@@ -15,6 +15,18 @@ def money_format(precision: int):
 
 
 def percent_format(precision: int):
+    return Format(
+        scheme=Scheme.percentage,
+        precision=precision,
+        # group=Group.no,
+        # decimal_delimiter=".",
+        # symbol=Symbol.yes,
+        # symbol_suffix="%",
+        sign=Sign.negative,
+    )
+
+
+def percent_format_pos(precision: int):
     return Format(
         scheme=Scheme.percentage,
         precision=precision,

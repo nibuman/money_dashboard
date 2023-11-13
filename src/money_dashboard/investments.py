@@ -9,6 +9,7 @@ from money_dashboard.data import commodities, RETURNS_YEARS
 
 money = dash_format.money_format(2)
 percent = dash_format.percent_format(1)
+percent_pos = dash_format.percent_format_pos(1)
 
 
 #  Tab layout
@@ -94,7 +95,12 @@ def investment_performance_columns():
     for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
-                {"id": f"annualised{y}_percent", "name": f"{y} Year Annualised", "type": "numeric", "format": percent},
+                {
+                    "id": f"annualised{y}_percent",
+                    "name": f"{y} Year Annualised",
+                    "type": "numeric",
+                    "format": percent_pos,
+                },
             ]
         )
     return [commodity, latest, identifier, ocf, *returns, quantity, value, percent_value]
@@ -190,7 +196,7 @@ def _investment_mix_bar():
                 commodities.by_asset_type(),
                 x="commodity_type",
                 y=["type_value", "ideal_mix"],
-                title="Long-Form Input",
+                title="Investment Mix - Current v. Ideal",
                 barmode="group",
             ),
             id="investment_mix_bar",
@@ -208,7 +214,9 @@ def _investment_mix_pie():
                 commodities.by_asset_type(),
                 names="commodity_type",
                 values="type_value",
-                title=f"Current mix. Total value = £{commodities.total_value:.0f}",
+                title=f"Current mix. Total value = £{commodities.total_value:,.0f}",
+                hole=0.3,
+                hover_data="commodities",
             ),
             id="investment_mix_pie",
         )
