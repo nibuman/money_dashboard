@@ -5,11 +5,7 @@ from dash import Dash, Input, Output, callback, dash_table, dcc, html
 import plotly.graph_objects as go
 from money_dashboard import dash_format
 from money_dashboard.data import commodities, RETURNS_YEARS
-
-
-money = dash_format.money_format(2)
-percent = dash_format.percent_format(1)
-percent_pos = dash_format.percent_format_pos(1)
+from money_dashboard.dash_format import money_format, percent_format, number_format, percent_format_pos
 
 
 #  Tab layout
@@ -85,13 +81,13 @@ def update_table(col: str):
 
 def investment_performance_columns():
     commodity = {"id": "commodity", "name": "Commodity"}
-    latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money}
-    quantity = {"id": "quantity", "name": "Quantity"}
+    latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money_format(2)}
+    quantity = {"id": "quantity", "name": "Quantity", "type": "numeric", "format": number_format(1)}
     identifier = {"id": "commodity_id", "name": "ISIN"}
     ocf = {"id": "commodity_ocf", "name": "ocf"}
-    value = {"id": "value", "name": "Value", "type": "numeric", "format": money}
+    value = {"id": "value", "name": "Value", "type": "numeric", "format": money_format(0)}
     returns = []
-    percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent}
+    percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent_format(1)}
     for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
@@ -99,7 +95,7 @@ def investment_performance_columns():
                     "id": f"annualised{y}_percent",
                     "name": f"{y} Year Annualised",
                     "type": "numeric",
-                    "format": percent_pos,
+                    "format": percent_format_pos(1),
                 },
             ]
         )
@@ -135,7 +131,7 @@ def average_returns_columns():
     for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
-                {"id": f"year{y}", "name": f"{y} Year Returns", "type": "numeric", "format": percent},
+                {"id": f"year{y}", "name": f"{y} Year Returns", "type": "numeric", "format": percent_format_pos(1)},
             ]
         )
     return returns
@@ -173,14 +169,11 @@ def update_bar_chart(col):
     else:
         year = col.removeprefix("annualised").removesuffix("_percent")
         fig = px.bar(
-            sorted_summary,
+            sorted_summary.loc[sorted_summary[col].notna(), :],
             x=col,
             y="commodity",
             title=f"{year} Year Change in Value (annualised %)",
             orientation="h",
-            color=col,
-            color_continuous_scale=['Crimson', 'OrangeRed', 'PaleGreen', 'green'],
-            color_continuous_midpoint=0,
         )
         fig.update_xaxes(tickformat=".0%")
     return fig

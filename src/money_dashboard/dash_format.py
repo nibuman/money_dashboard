@@ -1,6 +1,17 @@
 from dash.dash_table.Format import Format, Group, Scheme, Symbol, Sign
 
 
+def number_format(precision: int):
+    return Format(
+        scheme=Scheme.fixed,
+        precision=precision,
+        group=Group.yes,
+        groups=3,
+        group_delimiter=",",
+        decimal_delimiter=".",
+    )
+
+
 def money_format(precision: int):
     return Format(
         scheme=Scheme.fixed,

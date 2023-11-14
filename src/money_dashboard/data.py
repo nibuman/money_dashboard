@@ -39,6 +39,7 @@ class Commodities:
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
         self.summary = self._set_summary()
+        print(self.summary.loc[:, "annualised3_percent"])
         self.account = account
         print(self.by_asset_type())
 
