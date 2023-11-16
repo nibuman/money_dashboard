@@ -39,9 +39,7 @@ class Commodities:
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
         self.summary = self._set_summary()
-        print(self.summary.loc[:, "annualised3_percent"])
         self.account = account
-        print(self.by_asset_type())
 
     @classmethod
     def from_gnucash(cls, commodities: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment"):
@@ -114,8 +112,20 @@ class Commodities:
 
 
 class Assets:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, asset_values: pd.DataFrame) -> None:
+        self.asset_values = asset_values
+
+    @classmethod
+    def from_gnucash(cls, assets_time_series: pd.DataFrame):
+        assets_time_series = assets_time_series.assign(
+            available_total=lambda df_: df_.loc[:, ["Savings & Investments", "Current Assets"]].sum(axis=1),
+            total=lambda df_: df_.loc[:, "Savings & Investments":"Retirement"].sum(axis=1),
+        )
+        return cls(assets_time_series)
+
+    @property
+    def latest_values(self):
+        return self.asset_values.iloc[[0], 1:]
 
 
 def get_commodity_data() -> list[dict]:
@@ -168,3 +178,5 @@ commodities = Commodities.from_gnucash(
 retirement = Commodities.from_gnucash(
     gnucash_export.get_commodity_prices(), gnucash_export.get_commodity_quantities("Retirement"), "retirement"
 )
+
+assets = Assets.from_gnucash(gnucash_export.get_assets_time_series())
