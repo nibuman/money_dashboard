@@ -2,11 +2,13 @@
 specific to the source - e.g. piecash book objects. Takes data in standard python or pandas"""
 
 import pandas as pd
+import numpy as np
 import datetime
 import json
 from dataclasses import dataclass
 from typing import Optional
 from money_dashboard import gnucash_export
+from dateutil.relativedelta import relativedelta
 
 START_DATE = datetime.datetime(year=2018, month=1, day=1)
 CURRENT_DATE = datetime.datetime.now()
@@ -98,7 +100,7 @@ class Commodities:
         return (
             self.summary.groupby('commodity_type')
             .agg(
-                type_value=('value', sum),
+                type_value=('value', 'sum'),
                 commodities=('commodity', lambda x: ", ".join(x)),
             )
             .reset_index()
@@ -128,8 +130,34 @@ class Assets:
         return self.asset_values.iloc[[0], 1:]
 
 
+class Retirement_Model:
+    def __init__(self, asset_values: pd.DataFrame, historic_data: dict) -> None:
+        """asset_values: the current data, expects the full Assets.asset_values dataframe
+        historic_data: expects the dict of years/values from the json datafile
+        """
+        actual_values = self.merge_current_historic_data(asset_values, historic_data)
+        self.model = self.create_model(actual_values)
+
+    def merge_current_historic_data(self, asset_values, historic_data):
+        current_data = asset_values.loc[:, ["date", "Retirement"]].rename(columns={"Retirement": "actual_values"})
+        historic_data = pd.DataFrame(
+            {
+                "date": [datetime.date(year=int(k), month=1, day=1) for k in historic_data.keys()],
+                "actual_values": [float(v) for v in historic_data.values()],
+            }
+        )
+        return pd.concat([current_data, historic_data]).sort_values(by="date")
+
+    def create_model(self, actual_values):
+        return actual_values.assign(date=pd.to_datetime(actual_values.date), age=lambda df_: df_.date.dt.year - 1975)
+
+
 def get_commodity_data() -> list[dict]:
     return _load_data()["commodities"]
+
+
+def get_historic_retirement_data() -> dict:
+    return _load_data()["retirement_historic_data"]
 
 
 def get_investment_mix_data(account: str = "investment_mix") -> pd.DataFrame:
@@ -180,3 +208,4 @@ retirement = Commodities.from_gnucash(
 )
 
 assets = Assets.from_gnucash(gnucash_export.get_assets_time_series())
+retirement_model = Retirement_Model(assets.asset_values, get_historic_retirement_data())
