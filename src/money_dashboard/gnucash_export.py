@@ -29,7 +29,7 @@ def get_assets_time_series() -> pd.DataFrame:
     return pd.DataFrame(asset_values)
 
 
-def get_commodity_quantities(account_section: str):
+def get_commodity_quantities(account_section: str) -> pd.DataFrame:
     assets = root.children(name="Assets")
     section = assets.children(name=account_section)
     commodity_amounts = {}

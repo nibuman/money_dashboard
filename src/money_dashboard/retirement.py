@@ -1,10 +1,8 @@
 import dash_mantine_components as dmc
 import plotly.express as px
-import numpy as np
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
-import plotly.graph_objects as go
 from money_dashboard import dash_format
-from money_dashboard.data import retirement, RETURNS_YEARS
+from money_dashboard.data import retirement, assets, retirement_model, RETURNS_YEARS
 from money_dashboard.dash_format import money_format, percent_format, percent_format_pos, number_format
 
 
@@ -28,7 +26,7 @@ def _retirement_tab():
                         dmc.Col(_retirements_performance_graph(), span=5),
                         dmc.Col(_retirements_radiogroup(), span=7),
                         dmc.Col(_retirement_performance_table(), span=11),
-                        dmc.Col(_retirement_mix_bar(), span=7),
+                        dmc.Col(_retirements_modelling_graph(), span=7),
                         dmc.Col(_retirement_mix_pie(), span=5),
                     ]
                 ),
@@ -221,6 +219,25 @@ def _retirement_mix_pie():
     ]
 
 
+#  Retirement modelling graph
+
+
+def _retirements_modelling_graph():
+    return [
+        dcc.Graph(
+            figure=px.line(
+                retirement_model.model,
+                x="age",
+                y=[
+                    "actual_values",
+                ],
+                title="Long-Form Input",
+            ),
+            id="retirement_modelling_line_chart",
+        )
+    ]
+
+
 #  Radio buttons
 
 
@@ -247,7 +264,6 @@ def _retirements_radios() -> list[dmc.Radio]:
 
 @callback(
     Output(component_id="retirements_price_graph", component_property="figure"),
-    # Output(component_id="retirements_price_graph", component_property="title"),
     Input(component_id="retirement_performance_table", component_property="active_cell"),
     Input("retirement_performance_radio", "value"),
 )
