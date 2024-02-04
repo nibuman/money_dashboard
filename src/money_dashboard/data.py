@@ -38,7 +38,6 @@ class Commodities:
     def __init__(self, commodity_prices: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment") -> None:
         """commodity_prices: DataFrame with a datetime index and commodity names in the columns"""
         self.prices = commodity_prices
-        print(f"{self.prices.head()=}")
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
         self.summary = self._set_summary()
@@ -70,7 +69,6 @@ class Commodities:
         self.total_value = df_summary.value.sum(axis=0)
         for dy in RETURNS_YEARS:
             base_prices = self.base_prices(dy=dy)
-            print(f"{base_prices.head()=}")
             df_summary = df_summary.merge(base_prices)
             df_summary[f"year{dy}"] = df_summary.latest_price / df_summary[f"price_year{dy}"]
             df_summary[f"year{dy}_percent"] = (df_summary[f"year{dy}"]) - 1
@@ -85,7 +83,7 @@ class Commodities:
 
     def base_prices(self, dy: int) -> pd.DataFrame:
         """Returns a dataframe with the last price of each commodity a given number of years ago,
-        in this form, where the price column is dynamically named `price_year{dy}`, e.g for `dy = 3`:
+        where the price column is dynamically named `price_year{dy}`, e.g for `dy = 3`:
         index    commodity    price_year3
         0        stock_name1  12.265670
         1        stock_name2  13.743852
