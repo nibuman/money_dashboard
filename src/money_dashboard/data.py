@@ -40,7 +40,7 @@ class Commodities:
         self.prices = commodity_prices
         self.quantities = quantities
         self.average_returns: list[dict[str, float]] = [{}]
-        self.summary = self._set_summary()
+        self.summary = self._set_summary_and_total()  # The summary table to be displayed on the dashboard
         self.account = account
 
     @classmethod
@@ -63,7 +63,12 @@ class Commodities:
             .set_axis(["commodity", "latest_price"], axis=1)
         )
 
-    def _set_summary(self):
+    def _set_summary_and_total(self) -> pd.DataFrame:
+        """Set up the summary table of values to be displayed in the dashboard and `self.total_value`
+        commodity	latest_price	quantity	value	price_year1	year1	year1_percent	annualised1_percent ...
+        AZN	        101.809700	    301.0000	30644	108.800000	0.935751	-0.064249	-0.064249 ...
+        BARC	    1.455400	    303.0000	440 	1.746400	0.833372	-0.166628	-0.166628 ...
+        """
         df_summary = self.latest_prices.copy()
         df_summary = df_summary.merge(self.quantities).assign(value=lambda df_: df_.quantity * df_.latest_price)
         self.total_value = df_summary.value.sum(axis=0)

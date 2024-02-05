@@ -1,11 +1,10 @@
 from money_dashboard import data
-from typing import Generator, Final
+from typing import Final
 import pytest
 import datetime
 import pandas as pd
-from pytest_mock import MockFixture
 
-REFERENCE_DATE: Final[datetime.datetime] = datetime.datetime(2024, 1, 1, 0, 0, 0)
+REFERENCE_DATE: Final[datetime.datetime] = datetime.datetime(2024, 2, 4, 0, 0, 0)
 
 
 @pytest.fixture
@@ -25,18 +24,21 @@ def commodities(commodity_prices, quantities):
     return data.Commodities.from_gnucash(commodity_prices, quantities)
 
 
-@pytest.fixture
-def datetime_fixture(mocker: MockFixture):
-    mocked_datetime = mocker.patch(
-        "money_dashboard.data.datetime",
-    )
-    mocked_datetime.datetime.now.return_value = REFERENCE_DATE
-    yield mocked_datetime
-
-
 def test_Commodity_total_value(commodities: data.Commodities):
-    assert commodities.total_value == pytest.approx(63841.012545484904)
+    """Value from GNUCash on 2024-02-04 = 63841.02"""
+    assert pytest.approx(63841.02) == commodities.total_value
 
 
-def test_base_prices(commodities):
-    assert commodities == 4
+@pytest.mark.parametrize(
+    ["commodity_name", "actual_price"], [("MDHAAJ", 9 + 2244 / 2449), ("VVDVWE", 589.145195), ("SMT", 7.77)]
+)
+def test_latest_prices(commodities: data.Commodities, commodity_name, actual_price):
+    latest_price = commodities.latest_prices.set_index("commodity").at[commodity_name, "latest_price"]
+    assert pytest.approx(actual_price) == latest_price
+
+
+@pytest.mark.parametrize(["commodity_name", "dy", "actual_price"], [("SMT", 1, 7.134)])
+def test_base_prices(commodities, commodity_name, dy, actual_price):
+    data.CURRENT_DATE = REFERENCE_DATE
+    base_price = commodities.base_prices(dy).set_index("commodity").at[commodity_name, f"price_year{dy}"]
+    assert pytest.approx(actual_price) == base_price
