@@ -13,6 +13,8 @@ START_DATE = datetime.datetime(year=2018, month=1, day=1)
 CURRENT_DATE = datetime.datetime.now()
 RETURNS_YEARS = [1, 3, 5]
 
+gnucash_data = gnucash_export.get_data()
+
 
 @dataclass
 class CommodityType:
@@ -51,7 +53,7 @@ class Commodities:
         commodity_prices = (
             commodities.assign(date=lambda df_: pd.to_datetime(df_.date))
             .pivot_table(index="date", columns="commodity.mnemonic", values="value")
-            .astype("float64")  # Explicit casting from 'object' required for 'ffill'
+            .astype(dtype="float64")  # Explicit casting from 'object' required for 'ffill'
             .ffill()  # Without filling NaN values will get 'divide by zero' errors
             .drop(columns=["EUR", "GBP"])
             .sort_index()  # Order by date
@@ -221,15 +223,21 @@ def add_commodity_data(df_commodity: pd.DataFrame):
 def get_commodities(account: str) -> Commodities:
     """Return a Commodities object of the given account type such as investments, or retirement"""
     account_quantity_map = {"investment": "Savings & Investments", "retirement": "Retirement"}
+    if account == "investment":
+        quantities = gnucash_data.investment_quantities
+    elif account == "retirement":
+        quantities = gnucash_data.retirement_quantities
+    else:
+        raise ValueError(f"{account} is not a known account type")
     return Commodities.from_gnucash(
-        commodities=gnucash_export.get_commodity_prices(),
-        quantities=gnucash_export.get_commodity_quantities(account_quantity_map[account]),
+        commodities=gnucash_data.commodity_prices,
+        quantities=quantities,
         account=account,
     )
 
 
 def get_assets() -> Assets:
-    return Assets.from_gnucash(gnucash_export.get_assets_time_series())
+    return Assets.from_gnucash(gnucash_data.assets_time_series)
 
 
 all_commodities = [CommodityType(**c) for c in get_commodity_data()]

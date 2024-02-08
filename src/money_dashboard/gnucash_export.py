@@ -7,18 +7,35 @@ import datetime
 import pandas as pd
 import piecash  # Need to install latest piecash from GitHub. Pypi version gives 'cannot find imp' error
 from dateutil.relativedelta import relativedelta
+from dataclasses import dataclass
 
 GNUCASH_STARTDATE = datetime.datetime(year=2018, month=1, day=1)
 
-book = piecash.open_book("/home/nick/Documents/Money/GnuCash/NB_accounts_2023.gnucash")
-root = book.root_account  # select the root_account
+
+@dataclass
+class GNUCashData:
+    commodity_prices: pd.DataFrame
+    assets_time_series: pd.DataFrame
+    investment_quantities: pd.DataFrame
+    retirement_quantities: pd.DataFrame
 
 
-def get_commodity_prices() -> pd.DataFrame:
+def get_data():
+    with piecash.open_book("/home/nick/Documents/Money/GnuCash/NB_accounts_2023.gnucash") as book:
+        root = book.root_account  # select the root_account
+        return GNUCashData(
+            commodity_prices=get_commodity_prices(book),
+            assets_time_series=get_assets_time_series(root),
+            investment_quantities=get_commodity_quantities("Savings & Investments", root),
+            retirement_quantities=get_commodity_quantities("Retirement", root),
+        )
+
+
+def get_commodity_prices(book) -> pd.DataFrame:
     return book.prices_df()
 
 
-def get_assets_time_series() -> pd.DataFrame:
+def get_assets_time_series(root) -> pd.DataFrame:
     assets = root.children(name="Assets")
     dates = get_time_series(relativedelta(months=1))
     asset_values = {"date": dates}
@@ -30,7 +47,7 @@ def get_assets_time_series() -> pd.DataFrame:
     return pd.DataFrame(asset_values)
 
 
-def get_commodity_quantities(account_section: str) -> pd.DataFrame:
+def get_commodity_quantities(account_section: str, root) -> pd.DataFrame:
     assets = root.children(name="Assets")
     section = assets.children(name=account_section)
     commodity_amounts = {}
