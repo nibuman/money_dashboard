@@ -2,13 +2,12 @@
 specific to the source - e.g. piecash book objects. Takes data in standard python or pandas"""
 
 import pandas as pd
-import numpy as np
 import datetime
 import json
 from dataclasses import dataclass
 from typing import Optional
+
 from money_dashboard import gnucash_export
-from dateutil.relativedelta import relativedelta
 
 START_DATE = datetime.datetime(year=2018, month=1, day=1)
 CURRENT_DATE = datetime.datetime.now()
@@ -44,15 +43,21 @@ class Commodities:
         self.account = account
 
     @classmethod
-    def from_gnucash(cls, commodities: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment"):
+    def from_gnucash(
+        cls, commodities: pd.DataFrame, quantities: pd.DataFrame, account: str = "investment"
+    ) -> "Commodities":
         """commodities: expects a DataFrame with a column for dates (date - as strings), commodity names
         (commmodity.mnemonic), and commodity prices (value)"""
-        df = commodities.assign(date=lambda df_: pd.to_datetime(df_.date)).pivot_table(
-            index="date", columns="commodity.mnemonic", values="value"
+        commodity_prices = (
+            commodities.assign(date=lambda df_: pd.to_datetime(df_.date))
+            .pivot_table(index="date", columns="commodity.mnemonic", values="value")
+            .astype("float64")  # Explicit casting from 'object' required for 'ffill'
+            .ffill()  # Without filling NaN values will get 'divide by zero' errors
+            .drop(columns=["EUR", "GBP"])
+            .sort_index()  # Order by date
         )
-        mask = df.index >= START_DATE
-        df = df.loc[mask].ffill().drop(columns=["EUR", "GBP"]).sort_index()
-        return cls(df, quantities, account)
+        date_mask = commodity_prices.index >= START_DATE
+        return cls(commodity_prices.loc[date_mask, :], quantities, account)
 
     @property
     def latest_prices(self) -> pd.DataFrame:
@@ -105,7 +110,7 @@ class Commodities:
         return (
             self.prices.loc[date_mask, :]
             .sort_index()
-            .iloc[0]
+            .iloc[0, :]
             .T.reset_index()
             .set_axis(["commodity", f"price_year{dy}"], axis=1)
         )
@@ -213,16 +218,22 @@ def add_commodity_data(df_commodity: pd.DataFrame):
     return df_commodity
 
 
+def get_commodities(account: str) -> Commodities:
+    """Return a Commodities object of the given account type such as investments, or retirement"""
+    account_quantity_map = {"investment": "Savings & Investments", "retirement": "Retirement"}
+    return Commodities.from_gnucash(
+        commodities=gnucash_export.get_commodity_prices(),
+        quantities=gnucash_export.get_commodity_quantities(account_quantity_map[account]),
+        account=account,
+    )
+
+
+def get_assets() -> Assets:
+    return Assets.from_gnucash(gnucash_export.get_assets_time_series())
+
+
 all_commodities = [CommodityType(**c) for c in get_commodity_data()]
-commodities = Commodities.from_gnucash(
-    gnucash_export.get_commodity_prices(),
-    gnucash_export.get_commodity_quantities("Savings & Investments"),
-    "investment",
-)
-
-retirement = Commodities.from_gnucash(
-    gnucash_export.get_commodity_prices(), gnucash_export.get_commodity_quantities("Retirement"), "retirement"
-)
-
-assets = Assets.from_gnucash(gnucash_export.get_assets_time_series())
+investments = get_commodities("investment")
+retirement = get_commodities("retirement")
+assets = get_assets()
 retirement_model = Retirement_Model(assets.asset_values, get_historic_retirement_data())

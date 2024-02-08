@@ -1,10 +1,11 @@
 """Module to extract data from GnuCash. Gets the data into the simplest possible python standard
 data structure or DataFrame
 """
+
 import datetime
 
 import pandas as pd
-import piecash
+import piecash  # Need to install latest piecash from GitHub. Pypi version gives 'cannot find imp' error
 from dateutil.relativedelta import relativedelta
 
 GNUCASH_STARTDATE = datetime.datetime(year=2018, month=1, day=1)

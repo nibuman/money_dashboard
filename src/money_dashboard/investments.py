@@ -3,10 +3,9 @@ import plotly.express as px
 import numpy as np
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
 import plotly.graph_objects as go
-from money_dashboard import dash_format
-from money_dashboard.data import commodities, RETURNS_YEARS
+from money_dashboard import dash_format, data
+from money_dashboard.data import investments
 from money_dashboard.dash_format import money_format, percent_format, number_format, percent_format_pos
-
 
 #  Tab layout
 
@@ -43,13 +42,13 @@ def _investment_tab():
 
 def _investment_performance_table():
     return dash_table.DataTable(
-        data=commodities.summary.to_dict("records"),
+        data=investments.summary.to_dict("records"),
         columns=investment_performance_columns(),
         id="investment_performance_table",
         page_size=50,
         style_table={"overflowX": "auto"},
         style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"annualised{y}_percent" for y in RETURNS_YEARS]
+            [f"annualised{y}_percent" for y in data.RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -67,7 +66,7 @@ def _investment_performance_table():
 
 
 def update_tooltips(col: str):
-    sorted_summary = commodities.sorted_summary(column=col)
+    sorted_summary = investments.sorted_summary(column=col)
     return [
         {key: {'value': f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
         for row in sorted_summary.to_dict("records")
@@ -75,7 +74,7 @@ def update_tooltips(col: str):
 
 
 def update_table(col: str):
-    sorted_summary = commodities.sorted_summary(column=col)
+    sorted_summary = investments.sorted_summary(column=col)
     return sorted_summary.to_dict("records")
 
 
@@ -88,7 +87,7 @@ def investment_performance_columns():
     value = {"id": "value", "name": "Value", "type": "numeric", "format": money_format(0)}
     returns = []
     percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent_format(1)}
-    for y in reversed(RETURNS_YEARS):
+    for y in reversed(data.RETURNS_YEARS):
         returns.extend(
             [
                 {
@@ -107,13 +106,13 @@ def investment_performance_columns():
 
 def _investment_average_returns_table():
     return dash_table.DataTable(
-        data=commodities.average_returns,
+        data=investments.average_returns,
         columns=average_returns_columns(),
         id="investment_average_returns_table",
         page_size=2,
         style_table={"overflowX": "auto"},
         style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"year{y}_percent" for y in RETURNS_YEARS]
+            [f"year{y}_percent" for y in data.RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -128,7 +127,7 @@ def _investment_average_returns_table():
 
 def average_returns_columns():
     returns = []
-    for y in reversed(RETURNS_YEARS):
+    for y in reversed(data.RETURNS_YEARS):
         returns.extend(
             [
                 {"id": f"year{y}", "name": f"{y} Year Returns", "type": "numeric", "format": percent_format_pos(1)},
@@ -142,7 +141,7 @@ def average_returns_columns():
 
 def _investments_graph():
     return dcc.Graph(
-        figure=px.line(commodities.prices, x=commodities.prices.index, y="AZN"), id="investments_price_graph"
+        figure=px.line(investments.prices, x=investments.prices.index, y="AZN"), id="investments_price_graph"
     )
 
 
@@ -150,14 +149,14 @@ def _investments_graph():
 def _investments_performance_graph():
     return [
         dcc.Graph(
-            figure=px.bar(commodities.summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
+            figure=px.bar(investments.summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
             id="performance_bar_chart",
         )
     ]
 
 
 def update_bar_chart(col):
-    sorted_summary = commodities.sorted_summary(column=col, sort_ascending=True)
+    sorted_summary = investments.sorted_summary(column=col, sort_ascending=True)
     if col == "value":
         fig = px.bar(
             sorted_summary,
@@ -186,7 +185,7 @@ def _investment_mix_bar():
     return [
         dcc.Graph(
             figure=px.bar(
-                commodities.by_asset_type(),
+                investments.by_asset_type(),
                 x="commodity_type",
                 y=["type_value", "ideal_mix"],
                 title="Investment Mix - Current v. Ideal",
@@ -204,10 +203,10 @@ def _investment_mix_pie():
     return [
         dcc.Graph(
             figure=px.pie(
-                commodities.by_asset_type(),
+                investments.by_asset_type(),
                 names="commodity_type",
                 values="type_value",
-                title=f"Current mix. Total value = £{commodities.total_value:,.0f}",
+                title=f"Current mix. Total value = £{investments.total_value:,.0f}",
                 hole=0.3,
                 hover_data="commodities",
             ),
@@ -232,7 +231,9 @@ def _investments_radiogroup():
 
 
 def _investments_radios() -> list[dmc.Radio]:
-    radios = [dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(RETURNS_YEARS)]
+    radios = [
+        dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(data.RETURNS_YEARS)
+    ]
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
 
@@ -248,7 +249,7 @@ def _investments_radios() -> list[dmc.Radio]:
 )
 def update_graph(active_cell, sort_col):
     col = sort_col.removeprefix("radio_")
-    sorted_summary = commodities.sorted_summary(column=col)
+    sorted_summary = investments.sorted_summary(column=col)
     if active_cell:
         data_row = active_cell["row"]
         cell_value = sorted_summary.loc[data_row, "commodity"]
@@ -257,7 +258,7 @@ def update_graph(active_cell, sort_col):
         cell_value = "AZN"
         mask = sorted_summary.commodity.values == cell_value
         title = sorted_summary.loc[mask, "commodity_name"].item()
-    fig = px.line(commodities.prices, x=commodities.prices.index, y=cell_value, title=title)
+    fig = px.line(investments.prices, x=investments.prices.index, y=cell_value, title=title)
 
     return fig
 

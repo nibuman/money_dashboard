@@ -6,7 +6,6 @@ from dash import Dash, Input, Output, callback, dash_table, dcc, html
 from money_dashboard.data import assets
 from money_dashboard import dash_format
 
-
 money = dash_format.money_format(0)
 column_format = [
     dict(

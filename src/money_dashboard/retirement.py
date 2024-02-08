@@ -4,7 +4,7 @@ from dash import Dash, Input, Output, callback, dash_table, dcc, html
 from money_dashboard import dash_format
 from money_dashboard.data import retirement, assets, retirement_model, RETURNS_YEARS
 from money_dashboard.dash_format import money_format, percent_format, percent_format_pos, number_format
-
+from money_dashboard import data
 
 #  Tab layout
 
