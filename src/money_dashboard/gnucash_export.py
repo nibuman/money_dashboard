@@ -20,7 +20,7 @@ class GNUCashData:
     retirement_quantities: pd.DataFrame
 
 
-def get_data():
+def get_data() -> GNUCashData:
     with piecash.open_book("/home/nick/Documents/Money/GnuCash/NB_accounts_2023.gnucash") as book:
         root = book.root_account  # select the root_account
         return GNUCashData(
@@ -35,16 +35,29 @@ def get_commodity_prices(book) -> pd.DataFrame:
     return book.prices_df()
 
 
-def get_assets_time_series(root) -> pd.DataFrame:
-    assets = root.children(name="Assets")
-    dates = get_time_series(relativedelta(months=1))
-    asset_values = {"date": dates}
-    asset_accounts = [acc.name for acc in assets.children if acc.get_balance(recurse=True) and not acc.hidden]
-    for account in asset_accounts:
-        asset_values[account] = [
-            assets.children(name=account).get_balance(recurse=True, at_date=date) for date in asset_values["date"]
-        ]
-    return pd.DataFrame(asset_values)
+def get_assets_time_series(root, refresh: bool = False) -> pd.DataFrame:
+    """Returns a time series of every Assets account which currently has a balance and is not hidden
+
+    This is SLOW. ~10 seconds with time delta of 1 month so by default loads a cached value
+    """
+    if refresh:
+        assets = root.children(name="Assets")
+        dates = get_time_series(relativedelta(months=1))
+        asset_values = {"date": dates}
+        asset_accounts = [acc.name for acc in assets.children if acc.get_balance(recurse=True) and not acc.hidden]
+        for account in asset_accounts:
+            asset_values[account] = [
+                assets.children(name=account).get_balance(recurse=True, at_date=date) for date in asset_values["date"]
+            ]
+        time_series = pd.DataFrame(asset_values)
+        time_series.to_feather(
+            "/home/nick/Documents/Programming/money-dashboard/src/money_dashboard/data/assets_time_series_cache"
+        )
+    else:
+        time_series = pd.read_feather(
+            "/home/nick/Documents/Programming/money-dashboard/src/money_dashboard/data/assets_time_series_cache"
+        )
+    return time_series
 
 
 def get_commodity_quantities(account_section: str, root) -> pd.DataFrame:
