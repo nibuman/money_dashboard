@@ -20,7 +20,7 @@ app.layout = dmc.Tabs(
         dmc.TabsPanel(assets.create_layout(), value="1"),
         dmc.TabsPanel(investments.create_layout(), value="2"),
         dmc.TabsPanel(retirement.create_layout(), value="3"),
-        dcc.Store(id='sorted_data'),
+        dcc.Store(id="sorted_data"),
     ],
     value="1",
 )

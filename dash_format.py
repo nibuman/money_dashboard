@@ -1,4 +1,4 @@
-from dash.dash_table.Format import Format, Group, Scheme, Symbol, Sign
+from dash.dash_table.Format import Format, Group, Scheme, Sign, Symbol
 
 
 def number_format(precision: int):
@@ -55,7 +55,7 @@ def conditional_format_percent_change(columns: list[str]) -> list[dict]:
         conditional.append(
             {
                 "if": {
-                    "filter_query": "{{{col}}} < 0".format(col=col),
+                    "filter_query": f"{{{col}}} < 0",
                     "column_id": col,
                 },
                 "color": "tomato",
@@ -73,7 +73,7 @@ def conditional_format_percent_change(columns: list[str]) -> list[dict]:
         conditional.append(
             {
                 "if": {
-                    "filter_query": "{{{col}}} > 0".format(col=col),
+                    "filter_query": f"{{{col}}} > 0",
                     "column_id": col,
                 },
                 "color": "green",

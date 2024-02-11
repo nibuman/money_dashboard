@@ -1,7 +1,8 @@
 import dash_mantine_components as dmc
 import pandas as pd
 import plotly.express as px
-from dash import Dash, Input, Output, callback, dash_table, dcc, html
+from dash import Input, Output, callback, dash_table, dcc
+
 import dash_format
 from utils import DATA_PATH
 
@@ -10,12 +11,12 @@ df_latest_values = pd.read_csv(DATA_PATH / "assets_latest_summary.csv")
 
 money = dash_format.money_format(0)
 column_format = [
-    dict(
-        id=i,
-        name=i,
-        type="numeric",
-        format=money,
-    )
+    {
+        "id": i,
+        "name": i,
+        "type": "numeric",
+        "format": money,
+    }
     for i in df_assets_time_series.columns
 ][1:]
 

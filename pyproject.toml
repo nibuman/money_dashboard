@@ -152,10 +152,6 @@ omit = [
   "src/money_dashboard/__about__.py",
 ]
 
-[tool.coverage.paths]
-money_dashboard = ["src/money_dashboard", "*/money-dashboard/src/money_dashboard"]
-tests = ["tests", "*/money-dashboard/tests"]
-
 [tool.coverage.report]
 exclude_lines = [
   "no cov",

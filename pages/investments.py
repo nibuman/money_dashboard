@@ -1,10 +1,11 @@
 import dash_mantine_components as dmc
-import plotly.express as px
 import pandas as pd
-from dash import Dash, Input, Output, callback, dash_table, dcc, html
+import plotly.express as px
+from dash import Input, Output, callback, dash_table, dcc
+
 import dash_format
-from dash_format import money_format, percent_format, number_format, percent_format_pos
 import utils
+from dash_format import money_format, number_format, percent_format, percent_format_pos
 
 df_summary = pd.read_csv(utils.DATA_PATH / "investments_summary.csv")
 df_prices = pd.read_csv(utils.DATA_PATH / "investments_price_time_series.csv").set_index("date")
@@ -63,7 +64,7 @@ def investment_performance_table():
         },
         tooltip_delay=0,
         css=[
-            {'selector': '.dash-table-tooltip', 'rule': 'background-color: grey; font-family: monospace; color: white'}
+            {"selector": ".dash-table-tooltip", "rule": "background-color: grey; font-family: monospace; color: white"}
         ],
     )
 
@@ -71,7 +72,7 @@ def investment_performance_table():
 def update_tooltips(col: str):
     df_sorted_summary = utils.sort_df(df_summary, column=col)
     return [
-        {key: {'value': f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
+        {key: {"value": f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
         for row in df_sorted_summary.to_dict("records")
     ]
 
