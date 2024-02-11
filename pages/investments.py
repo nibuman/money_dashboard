@@ -7,7 +7,7 @@ from dash_format import money_format, percent_format, number_format, percent_for
 import utils
 
 df_summary = pd.read_csv(utils.DATA_PATH / "investments_summary.csv")
-df_prices = pd.read_csv(utils.DATA_PATH / "investments_price_time_series.csv")
+df_prices = pd.read_csv(utils.DATA_PATH / "investments_price_time_series.csv").set_index("date")
 df_avg_returns = pd.read_csv(utils.DATA_PATH / "investments_average_returns.csv")
 df_grouped_assets = pd.read_csv(utils.DATA_PATH / "investments_grouped_by_type.csv")
 total_value = df_summary.value.sum(axis=0)

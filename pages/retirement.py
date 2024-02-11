@@ -110,17 +110,13 @@ def retirement_performance_columns():
 
 
 def retirement_average_returns_table():
-    print(f"{df_avg_returns.to_dict("records")=}", flush=True)
     return dash_table.DataTable(
-        
         data=df_avg_returns.to_dict("records"),
         columns=average_returns_columns(),
         id="retirement_average_returns_table",
         page_size=2,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"year{y}" for y in utils.RETURNS_YEARS]
-        ),
+        style_data_conditional=dash_format.conditional_format_percent_change([f"year{y}" for y in utils.RETURNS_YEARS]),
         style_cell={
             "height": "auto",
             # all three widths are needed
