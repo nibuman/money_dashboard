@@ -2,7 +2,7 @@ import dash_mantine_components as dmc
 import pandas as pd
 import plotly.express as px
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
-from money_dashboard import dash_format
+import dash_format
 from utils import DATA_PATH
 
 df_assets_time_series = pd.read_csv(DATA_PATH / "assets_time_series.csv")
