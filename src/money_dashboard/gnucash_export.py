@@ -35,7 +35,7 @@ def get_commodity_prices(book) -> pd.DataFrame:
     return book.prices_df()
 
 
-def get_assets_time_series(root, refresh: bool = False) -> pd.DataFrame:
+def get_assets_time_series(root, refresh: bool = True) -> pd.DataFrame:
     """Returns a time series of every Assets account which currently has a balance and is not hidden
 
     This is SLOW. ~10 seconds with time delta of 1 month so by default loads a cached value

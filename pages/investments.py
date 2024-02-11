@@ -1,16 +1,19 @@
 import dash_mantine_components as dmc
 import plotly.express as px
-import numpy as np
+import pandas as pd
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
-import plotly.graph_objects as go
-from money_dashboard import dash_format, data
-from money_dashboard.data import investments
-from money_dashboard.dash_format import money_format, percent_format, number_format, percent_format_pos
+import dash_format
+from dash_format import money_format, percent_format, number_format, percent_format_pos
+import utils
 
-#  Tab layout
+df_summary = pd.read_csv(utils.DATA_PATH / "investments_summary.csv")
+df_prices = pd.read_csv(utils.DATA_PATH / "investments_price_time_series.csv")
+df_avg_returns = pd.read_csv(utils.DATA_PATH / "investments_average_returns.csv")
+df_grouped_assets = pd.read_csv(utils.DATA_PATH / "investments_grouped_by_type.csv")
+total_value = df_summary.value.sum(axis=0)
 
 
-def _investment_tab():
+def create_layout():
     return [
         dmc.Container(
             [
@@ -19,16 +22,16 @@ def _investment_tab():
                     [
                         dmc.Col(
                             [
-                                _investments_graph(),
-                                _investment_average_returns_table(),
+                                investments_graph(),
+                                investment_average_returns_table(),
                             ],
                             span=7,
                         ),
-                        dmc.Col(_investments_performance_graph(), span=5),
-                        dmc.Col(_investments_radiogroup(), span=7),
-                        dmc.Col(_investment_performance_table(), span=11),
-                        dmc.Col(_investment_mix_bar(), span=7),
-                        dmc.Col(_investment_mix_pie(), span=5),
+                        dmc.Col(investments_performance_graph(), span=5),
+                        dmc.Col(investments_radiogroup(), span=7),
+                        dmc.Col(investment_performance_table(), span=11),
+                        dmc.Col(investment_mix_bar(), span=7),
+                        dmc.Col(investment_mix_pie(), span=5),
                     ]
                 ),
             ],
@@ -40,15 +43,15 @@ def _investment_tab():
 #  Investment performance table
 
 
-def _investment_performance_table():
+def investment_performance_table():
     return dash_table.DataTable(
-        data=investments.summary.to_dict("records"),
+        data=df_summary.to_dict("records"),
         columns=investment_performance_columns(),
         id="investment_performance_table",
         page_size=50,
         style_table={"overflowX": "auto"},
         style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"annualised{y}_percent" for y in data.RETURNS_YEARS]
+            [f"annualised{y}_percent" for y in utils.RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -66,16 +69,16 @@ def _investment_performance_table():
 
 
 def update_tooltips(col: str):
-    sorted_summary = investments.sorted_summary(column=col)
+    df_sorted_summary = utils.sort_df(df_summary, column=col)
     return [
         {key: {'value': f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
-        for row in sorted_summary.to_dict("records")
+        for row in df_sorted_summary.to_dict("records")
     ]
 
 
 def update_table(col: str):
-    sorted_summary = investments.sorted_summary(column=col)
-    return sorted_summary.to_dict("records")
+    df_sorted_summary = utils.sort_df(df_summary, column=col)
+    return df_sorted_summary.to_dict("records")
 
 
 def investment_performance_columns():
@@ -87,7 +90,7 @@ def investment_performance_columns():
     value = {"id": "value", "name": "Value", "type": "numeric", "format": money_format(0)}
     returns = []
     percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent_format(1)}
-    for y in reversed(data.RETURNS_YEARS):
+    for y in reversed(utils.RETURNS_YEARS):
         returns.extend(
             [
                 {
@@ -104,15 +107,15 @@ def investment_performance_columns():
 #  Average returns table
 
 
-def _investment_average_returns_table():
+def investment_average_returns_table():
     return dash_table.DataTable(
-        data=investments.average_returns,
+        data=df_avg_returns.to_dict("records"),
         columns=average_returns_columns(),
         id="investment_average_returns_table",
         page_size=2,
         style_table={"overflowX": "auto"},
         style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"year{y}_percent" for y in data.RETURNS_YEARS]
+            [f"year{y}_percent" for y in utils.RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -127,7 +130,7 @@ def _investment_average_returns_table():
 
 def average_returns_columns():
     returns = []
-    for y in reversed(data.RETURNS_YEARS):
+    for y in reversed(utils.RETURNS_YEARS):
         returns.extend(
             [
                 {"id": f"year{y}", "name": f"{y} Year Returns", "type": "numeric", "format": percent_format_pos(1)},
@@ -139,24 +142,22 @@ def average_returns_columns():
 #  Line graph of individual stock performance
 
 
-def _investments_graph():
-    return dcc.Graph(
-        figure=px.line(investments.prices, x=investments.prices.index, y="AZN"), id="investments_price_graph"
-    )
+def investments_graph():
+    return dcc.Graph(figure=px.line(df_prices, x=df_prices.index, y="AZN"), id="investments_price_graph")
 
 
 #  Horizontal bar chart of performance comparisons
-def _investments_performance_graph():
+def investments_performance_graph():
     return [
         dcc.Graph(
-            figure=px.bar(investments.summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
+            figure=px.bar(df_summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
             id="performance_bar_chart",
         )
     ]
 
 
 def update_bar_chart(col):
-    sorted_summary = investments.sorted_summary(column=col, sort_ascending=True)
+    sorted_summary = utils.sort_df(df_summary, column=col, sort_ascending=True)
     if col == "value":
         fig = px.bar(
             sorted_summary,
@@ -181,11 +182,11 @@ def update_bar_chart(col):
 # Investment mix bar chart
 
 
-def _investment_mix_bar():
+def investment_mix_bar():
     return [
         dcc.Graph(
             figure=px.bar(
-                investments.by_asset_type(),
+                df_grouped_assets,
                 x="commodity_type",
                 y=["type_value", "ideal_mix"],
                 title="Investment Mix - Current v. Ideal",
@@ -199,14 +200,14 @@ def _investment_mix_bar():
 #  Investment mix pie chart
 
 
-def _investment_mix_pie():
+def investment_mix_pie():
     return [
         dcc.Graph(
             figure=px.pie(
-                investments.by_asset_type(),
+                df_grouped_assets,
                 names="commodity_type",
                 values="type_value",
-                title=f"Current mix. Total value = £{investments.total_value:,.0f}",
+                title=f"Current mix. Total value = £{total_value:,.0f}",
                 hole=0.3,
                 hover_data="commodities",
             ),
@@ -218,10 +219,10 @@ def _investment_mix_pie():
 #  Radio buttons
 
 
-def _investments_radiogroup():
+def investments_radiogroup():
     return [
         dmc.RadioGroup(
-            _investments_radios(),
+            investments_radios(),
             id="investment_performance_radio",
             value="radio_year3_percent",
             size="sm",
@@ -230,9 +231,9 @@ def _investments_radiogroup():
     ]
 
 
-def _investments_radios() -> list[dmc.Radio]:
+def investments_radios() -> list[dmc.Radio]:
     radios = [
-        dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(data.RETURNS_YEARS)
+        dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(utils.RETURNS_YEARS)
     ]
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
@@ -249,17 +250,14 @@ def _investments_radios() -> list[dmc.Radio]:
 )
 def update_graph(active_cell, sort_col):
     col = sort_col.removeprefix("radio_")
-    sorted_summary = investments.sorted_summary(column=col)
+    sorted_summary = utils.sort_df(df_summary, column=col)
     if active_cell:
         data_row = active_cell["row"]
         cell_value = sorted_summary.loc[data_row, "commodity"]
-        title = sorted_summary.loc[data_row, "commodity_name"]
     else:
         cell_value = "AZN"
-        mask = sorted_summary.commodity.values == cell_value
-        title = sorted_summary.loc[mask, "commodity_name"].item()
-    fig = px.line(investments.prices, x=investments.prices.index, y=cell_value, title=title)
-
+    title = sorted_summary.set_index("commodity").at[cell_value, "commodity_name"]
+    fig = px.line(df_prices, x=df_prices.index, y=cell_value, title=title)
     return fig
 
 

@@ -2,7 +2,7 @@ import dash_mantine_components as dmc
 from dash import Dash, dcc
 
 # from money_dashboard import investments, retirement
-from pages import assets
+from pages import assets, investments
 
 # Initialize the app - incorporate a Dash Mantine theme
 external_stylesheets = [dmc.theme.DEFAULT_COLORS]
@@ -18,7 +18,7 @@ app.layout = dmc.Tabs(
             ]
         ),
         dmc.TabsPanel(assets.create_layout(), value="1"),
-        # dmc.TabsPanel(investments._investment_tab(), value="2"),
+        dmc.TabsPanel(investments.create_layout(), value="2"),
         # dmc.TabsPanel(retirement._retirement_tab(), value="3"),
         dcc.Store(id='sorted_data'),
     ],
