@@ -7,7 +7,8 @@ import dash_format
 from utils import DATA_PATH
 
 df_assets_time_series = pd.read_csv(DATA_PATH / "assets_time_series.csv")
-df_latest_values = pd.read_csv(DATA_PATH / "assets_latest_summary.csv")
+# The csv file has an index column, skipping this for latest values...
+df_latest_values = pd.read_csv(DATA_PATH / "assets_latest_summary.csv").iloc[:, 1:]
 
 money = dash_format.money_format(0)
 column_format = [
@@ -17,7 +18,7 @@ column_format = [
         "type": "numeric",
         "format": money,
     }
-    for i in df_assets_time_series.columns
+    for i in df_latest_values.columns
 ][1:]
 
 
