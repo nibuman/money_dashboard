@@ -8,7 +8,7 @@ with open(utils.DATA_PATH / "update_log.json", 'r') as f:
     update_data = json.load(f)
 
 update_date = update_data["time"]
-update_files = [{"No.": n, "File name": file} for n, file in enumerate(update_data["files"], start=1)]
+update_files = update_data["files"]
 
 
 def create_layout():
@@ -48,12 +48,12 @@ def data_style():
 
 def data_file_table():
     html_table_body = []
-    for row in update_files:
+    for num, file in enumerate(update_files, start=1):
         html_table_body.append(
             html.Tr(
                 [
-                    html.Td(row["No."], style=data_style()),
-                    html.Td(row["File name"], style=data_style()),
+                    html.Td(num, style=data_style()),
+                    html.Td(file, style=data_style()),
                 ]
             )
         )
