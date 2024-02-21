@@ -7,7 +7,7 @@ from pages import assets, investments, retirement, info
 # Initialize the app - incorporate a Dash Mantine theme
 external_stylesheets = [dmc.theme.DEFAULT_COLORS]
 app = Dash(__name__, external_stylesheets=external_stylesheets, title="Finances")
-
+server = app.server  # server points to the Flask server behind Dash. Gunicorn needs a reference to this
 app.layout = dmc.Tabs(
     [
         dmc.TabsList(
@@ -29,5 +29,5 @@ app.layout = dmc.Tabs(
 
 # Run the App
 if __name__ == "__main__":
-    # app.run(debug=True)
+    # Need these settings for the server to be visible to other computers on the network
     app.run_server(host="0.0.0.0", port="8050")
