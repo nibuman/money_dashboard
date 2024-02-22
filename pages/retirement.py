@@ -1,5 +1,4 @@
 import dash_mantine_components as dmc
-import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
 
@@ -7,14 +6,14 @@ import dash_format
 import utils
 from dash_format import money_format, number_format, percent_format, percent_format_pos
 
-df_summary = pd.read_csv(utils.DATA_PATH / "retirement_summary.csv")
-df_prices = pd.read_csv(utils.DATA_PATH / "retirement_price_time_series.csv").set_index("date")
-df_avg_returns = pd.read_csv(utils.DATA_PATH / "retirement_average_returns.csv")
-df_grouped_assets = pd.read_csv(utils.DATA_PATH / "retirement_grouped_by_type.csv")
-total_value = df_summary.value.sum(axis=0)
+summary = utils.csv_to_dict("retirement_summary.csv")
+prices = utils.csv_to_dict("retirement_price_time_series.csv")
+avg_returns = utils.csv_to_dict("retirement_average_returns.csv")
+grouped_assets = utils.csv_to_dict("retirement_grouped_by_type.csv")
+total_value = sum(float(row["value"]) for row in summary)
+
+
 #  Tab layout
-
-
 def create_layout():
     return [
         dmc.Container(
@@ -43,11 +42,9 @@ def create_layout():
 
 
 #  retirement performance table
-
-
 def retirement_performance_table():
     return dash_table.DataTable(
-        data=df_summary.to_dict("records"),
+        data=summary,
         columns=retirement_performance_columns(),
         id="retirement_performance_table",
         page_size=50,
@@ -71,16 +68,16 @@ def retirement_performance_table():
 
 
 def update_tooltips(col: str):
-    sorted_summary = utils.sort_df(df_summary, column=col)
+    sorted_summary = utils.sort_data(summary, column=col)
     return [
         {key: {"value": f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
-        for row in sorted_summary.to_dict("records")
+        for row in sorted_summary
     ]
 
 
 def update_table(col: str):
-    sorted_summary = utils.sort_df(df_summary, column=col)
-    return sorted_summary.to_dict("records")
+    sorted_summary = utils.sort_data(summary, column=col)
+    return sorted_summary
 
 
 def retirement_performance_columns():
@@ -112,7 +109,7 @@ def retirement_performance_columns():
 
 def retirement_average_returns_table():
     return dash_table.DataTable(
-        data=df_avg_returns.to_dict("records"),
+        data=avg_returns,
         columns=average_returns_columns(),
         id="retirement_average_returns_table",
         page_size=2,
@@ -149,21 +146,21 @@ def average_returns_columns():
 
 
 def retirements_graph():
-    return dcc.Graph(figure=px.line(df_prices, x=df_prices.index, y="AZ Diversified"), id="retirements_price_graph")
+    return dcc.Graph(figure=px.line(prices, x="date", y="AZ Diversified"), id="retirements_price_graph")
 
 
 #  Horizontal bar chart of performance comparisons
 def retirements_performance_graph():
     return [
         dcc.Graph(
-            figure=px.bar(df_summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
+            figure=px.bar(summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
             id="retirement_performance_bar_chart",
         )
     ]
 
 
 def update_bar_chart(col):
-    sorted_summary = utils.sort_df(df_summary, column=col, sort_ascending=True)
+    sorted_summary = utils.sort_data(summary, column=col, sort_ascending=True)
     if col == "value":
         fig = px.bar(
             sorted_summary,
@@ -175,7 +172,7 @@ def update_bar_chart(col):
     else:
         year = col.removeprefix("annualised").removesuffix("_percent")
         fig = px.bar(
-            sorted_summary.loc[sorted_summary[col].notna(), :],
+            sorted_summary,
             x=col,
             y="commodity",
             title=f"{year} Year Change in Value (annualised %)",
@@ -192,7 +189,7 @@ def retirement_mix_bar():
     return [
         dcc.Graph(
             figure=px.bar(
-                df_grouped_assets,
+                grouped_assets,
                 x="commodity_type",
                 y=["type_value", "ideal_mix"],
                 title="Long-Form Input",
@@ -210,7 +207,7 @@ def retirement_mix_pie():
     return [
         dcc.Graph(
             figure=px.pie(
-                df_grouped_assets,
+                grouped_assets,
                 names="commodity_type",
                 values="type_value",
                 title=f"Current mix. Total value = £{total_value:,.0f}",
@@ -273,16 +270,14 @@ def retirements_radios() -> list[dmc.Radio]:
 )
 def update_graph(active_cell, sort_col):
     col = sort_col.removeprefix("radio_")
-    sorted_summary = utils.sort_df(df_summary, column=col)
+    sorted_summary = utils.sort_data(summary, column=col)
     if active_cell:
         data_row = active_cell["row"]
-        cell_value = sorted_summary.loc[data_row, "commodity"]
-        title = sorted_summary.loc[data_row, "commodity_name"]
+        cell_value = sorted_summary[data_row]["commodity"]
     else:
         cell_value = "AZ Diversified"
-        mask = sorted_summary.commodity.values == cell_value
-        title = sorted_summary.loc[mask, "commodity_name"].item()
-    fig = px.line(df_prices, x=df_prices.index, y=cell_value, title=title)
+    title = [row["commodity_name"] for row in sorted_summary if row["commodity"] == cell_value][0]
+    fig = px.line(prices, x="date", y=cell_value, title=title)
 
     return fig
 
