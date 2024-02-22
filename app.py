@@ -30,4 +30,5 @@ app.layout = dmc.Tabs(
 # Run the App
 if __name__ == "__main__":
     # Need these settings for the server to be visible to other computers on the network
-    app.run_server(host="0.0.0.0", port="8050")
+    # app.run_server(host="0.0.0.0", port="8050")
+    app.run()
