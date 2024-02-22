@@ -1,7 +1,6 @@
 import datetime
 import pathlib
 import csv
-import pandas as pd
 import math
 from functools import partial
 

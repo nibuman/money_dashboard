@@ -1,14 +1,14 @@
 import dash_mantine_components as dmc
-import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
 
 import dash_format
-from utils import DATA_PATH
+import utils
 
-df_assets_time_series = pd.read_csv(DATA_PATH / "assets_time_series.csv")
+
+assets_time_series = utils.csv_to_dict("assets_time_series.csv")
 # The csv file has an index column, skipping this for latest values...
-df_latest_values = pd.read_csv(DATA_PATH / "assets_latest_summary.csv").iloc[:, 1:]
+latest_values = utils.csv_to_dict("assets_latest_summary.csv")
 
 money = dash_format.money_format(0)
 column_format = [
@@ -18,13 +18,13 @@ column_format = [
         "type": "numeric",
         "format": money,
     }
-    for i in df_latest_values.columns
+    for i in latest_values[0].keys()
 ][1:]
 
 
 def asset_table():
     return dash_table.DataTable(
-        data=df_latest_values.to_dict("records"),
+        data=latest_values,
         columns=column_format,
         page_size=10,
         style_table={"overflowX": "auto"},
@@ -86,5 +86,5 @@ def create_layout():
     Input(component_id="asset_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    fig = px.line(df_assets_time_series, x="date", y=col_chosen)
+    fig = px.line(assets_time_series, x="date", y=col_chosen)
     return fig
