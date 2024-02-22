@@ -2,7 +2,6 @@ import dash_mantine_components as dmc
 import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
-
 import dash_format
 import utils
 from dash_format import money_format, number_format, percent_format, percent_format_pos
