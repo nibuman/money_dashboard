@@ -58,7 +58,7 @@ def last_update_time():
 
 
 def platform_info():
-    return output_format(f"Machine architecture: {platform.machine()}")
+    return output_format(f"Machine architecture: {platform.machine()} {platform.architecture()[0]}")
 
 
 def os_info():

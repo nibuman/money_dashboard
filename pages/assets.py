@@ -7,7 +7,6 @@ import utils
 
 
 assets_time_series = utils.csv_to_dict("assets_time_series.csv")
-# The csv file has an index column, skipping this for latest values...
 latest_values = utils.csv_to_dict("assets_latest_summary.csv")
 
 money = dash_format.money_format(0)
@@ -51,16 +50,7 @@ def asset_checkboxgroup():
 
 
 def asset_checkbox():
-    value_label_map = {
-        "Savings & Investments": "Savings & Investments",
-        "Current Assets": "Current Assets",
-        "Share Schemes": "Share Schemes",
-        "available_total": "Available Total",
-        "3 Thorold Grove": "3 Thorold Grove",
-        "total": "Total",
-        "Retirement": "Retirement",
-    }
-    return [dmc.Checkbox(label=label, value=value) for value, label in value_label_map.items()]
+    return [dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in latest_values[0].keys()][1:]
 
 
 def create_layout():
