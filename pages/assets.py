@@ -38,12 +38,6 @@ def asset_checkboxgroup():
     return dmc.CheckboxGroup(
         asset_checkbox(),
         id="asset_overview_checkboxes",
-        value=[
-            "Savings & Investments",
-            "Current Assets",
-            "Share Schemes",
-            "available_total",
-        ],
         size="sm",
         orientation="vertical",
     )

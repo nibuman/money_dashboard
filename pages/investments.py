@@ -243,7 +243,6 @@ def update_graph(active_cell, sort_col):
         cell_value = sorted_summary[data_row]["commodity"]
     else:
         cell_value = "AZN"
-    # title = sorted_summary.set_index("commodity").at[cell_value, "commodity_name"]
     title = [row["commodity_name"] for row in sorted_summary if row["commodity"] == cell_value][0]
     fig = px.line(prices, x="date", y=cell_value, title=title)
     return fig
