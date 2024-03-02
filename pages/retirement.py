@@ -1,6 +1,7 @@
 import dash_mantine_components as dmc
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc, html
+import math
 
 import dash_format
 import utils
@@ -30,6 +31,7 @@ def create_layout():
                                 dmc.Col(retirement_average_returns_table(), span=12),
                                 dmc.Col(retirements_radiogroup(), span=12),
                                 dmc.Col(retirement_performance_table(), span=12),
+                                dmc.Col(retirements_modelling_graph(), span=12),
                             ],
                             span=7,
                         ),
@@ -41,7 +43,6 @@ def create_layout():
                             ],
                             span=5,
                         ),
-                        dmc.Col(retirements_modelling_graph(), span=7),
                     ]
                 ),
             ],
@@ -271,9 +272,9 @@ def retirements_modelling_parameters():
                 label="Removal rate (%)",
                 style={"width": 300},
                 value=3,
-                min=0.1,
-                step=0.1,
-                precision=1,
+                min=0.05,
+                step=0.05,
+                precision=2,
                 max=10,
             ),
             dcc.Store(id="memory_income_sum", storage_type="local", data=0),
@@ -299,6 +300,41 @@ def retirements_modelling_parameters():
                     dmc.Text("Total sum required: £0"),
                 ],
             ),
+            dcc.Store(id="memory_expected_returns", storage_type="local", data=0),
+            dmc.NumberInput(
+                id="retirement_expected_returns",
+                label="Expected returns (%)",
+                style={"width": 300},
+                value=8,
+                step=0.05,
+                precision=2,
+            ),
+            dcc.Store(id="memory_inflation_rate", storage_type="local", data=0),
+            dmc.NumberInput(
+                id="retirement_inflation_rate",
+                label="Inflation rate (%)",
+                style={"width": 300},
+                value=3.5,
+                step=0.05,
+                precision=2,
+            ),
+            dcc.Store(id="memory_annual_contribution", storage_type="local", data=0),
+            dmc.NumberInput(
+                id="retirement_annual_contribution",
+                label="Annual contribution (present prices):",
+                style={"width": 300},
+                type="number",
+                value=0,
+                min=0,
+                step=1000,
+            ),
+            dcc.Store(id="memory_target_met_year", storage_type="local", data={"year": "NA", "age": "NA"}),
+            html.Div(
+            id="retirement_target_met_year",
+            children=[
+                dmc.Text("Target met at age N/A in N/A")
+            ],
+        ),
         ],
     )
 
@@ -350,6 +386,14 @@ def update_total_sum(total_sum):
         dmc.Text(f"Total sum required: £{total_sum}"),
     ]
 
+@callback(
+    Output(component_id="retirement_target_met_year", component_property="children"),
+    Input(component_id="memory_target_met_year", component_property="data"),
+)
+def update_target_met_year(target_met_year):
+    return [
+        dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),
+    ]
 
 @callback(
     Output(component_id="memory_monthly_income", component_property="data"),
@@ -358,6 +402,19 @@ def update_total_sum(total_sum):
 def store_monthly_income(monthly_income):
     return int(monthly_income)
 
+@callback(
+    Output(component_id="memory_expected_returns", component_property="data"),
+    Input(component_id="retirement_expected_returns", component_property="value"),
+)
+def store_expected_returns(expected_returns):
+    return expected_returns
+
+@callback(
+    Output(component_id="memory_inflation_rate", component_property="data"),
+    Input(component_id="retirement_inflation_rate", component_property="value"),
+)
+def store_inflation_rate(inflation_rate):
+    return inflation_rate
 
 @callback(
     Output(component_id="memory_removal_rate", component_property="data"),
@@ -365,6 +422,13 @@ def store_monthly_income(monthly_income):
 )
 def store_removal_rate(removal_rate):
     return float(removal_rate)
+
+@callback(
+    Output(component_id="memory_annual_contribution", component_property="data"),
+    Input(component_id="retirement_annual_contribution", component_property="value"),
+)
+def store_annual_contribution(annual_contribution):
+    return annual_contribution
 
 
 @callback(
@@ -442,13 +506,42 @@ def radio_button_actions(sort_col):
 
 @callback(
     Output(component_id="retirements_model_graph", component_property="figure"),
+    Output(component_id="memory_target_met_year", component_property="data"),
     Input(component_id="memory_total_sum", component_property="data"),
+    Input(component_id="memory_expected_returns", component_property="data"),
+    Input(component_id="memory_inflation_rate", component_property="data"),
+    Input(component_id="memory_annual_contribution", component_property="data"),
 )
-def update_model_graph(target):
+def update_model_graph(target, returns, inflation, contributions):
+    net_returns = 1 + (returns - inflation) / 100
+    start_year_idx, start_value = get_model_start(value_model=value_model)
+    model_value = start_value
+    target_met_year = None
+    for idx, year in enumerate(value_model):
+        if idx == start_year_idx-1:
+            year["model"] = model_value
+        elif idx >= start_year_idx:
+            print(f"{model_value=}, {year["model"]=}, {net_returns=}, {contributions=}, {idx=}")
+            model_value = (model_value * net_returns) + contributions
+            year["model"] = model_value
+
     for year in value_model:
         year["target"] = target
-    return px.line(
+    for year in value_model:
+        if year["model"] >= target:
+            target_met_year = year
+            break
+    return (px.line(
         value_model,
         x="year",
-        y=["actual_values", "target"],
-    )
+        y=["actual_values", "target", "model"],
+    ), target_met_year)
+
+
+def get_model_start(value_model):
+    current_value = 0
+    for idx, year in enumerate(value_model):
+        if math.isnan(year["actual_values"]):
+            return idx, current_value
+        current_value = year["actual_values"]
+    return idx, current_value
