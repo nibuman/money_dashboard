@@ -241,17 +241,14 @@ def retirements_modelling_graph():
         id="retirements_model_graph",
     )
 
-
+NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence_type": "local", "persistence": True}
 def retirements_modelling_parameters():
     return dmc.Stack(
         children=[
             dmc.Title("Model Parameters", color="blue", size="h2"),
-            dcc.Store(id="memory_monthly_income", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_monthly_income",
                 label="Monthly income (present prices):",
-                style={"width": 300},
-                type="number",
                 value=2000,
                 min=0,
                 step=10,
@@ -266,11 +263,9 @@ def retirements_modelling_parameters():
                     dmc.TextInput("Annual income (gross, present value): £0"),
                 ],
             ),
-            dcc.Store(id="memory_removal_rate", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_removal_rate",
                 label="Removal rate (%)",
-                style={"width": 300},
                 value=3,
                 min=0.05,
                 step=0.05,
@@ -284,12 +279,10 @@ def retirements_modelling_parameters():
                     dmc.Text("Required sum to produce income: £0"),
                 ],
             ),
-            dcc.Store(id="memory_lump_sum", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_lump_sum",
                 label="Lump sum",
-                style={"width": 300},
-                value=100_000,
+                value=0,
                 min=0,
                 step=1_000,
             ),
@@ -300,30 +293,23 @@ def retirements_modelling_parameters():
                     dmc.Text("Total sum required: £0"),
                 ],
             ),
-            dcc.Store(id="memory_expected_returns", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_expected_returns",
                 label="Expected returns (%)",
-                style={"width": 300},
                 value=8,
                 step=0.05,
                 precision=2,
             ),
-            dcc.Store(id="memory_inflation_rate", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_inflation_rate",
                 label="Inflation rate (%)",
-                style={"width": 300},
                 value=3.5,
                 step=0.05,
                 precision=2,
             ),
-            dcc.Store(id="memory_annual_contribution", storage_type="local", data=0),
-            dmc.NumberInput(
+            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
                 id="retirement_annual_contribution",
                 label="Annual contribution (present prices):",
-                style={"width": 300},
-                type="number",
                 value=0,
                 min=0,
                 step=1000,
@@ -365,7 +351,7 @@ def retirements_radios() -> list[dmc.Radio]:
     Output(component_id="retirement_income_sum", component_property="children"),
     Output(component_id="memory_income_sum", component_property="data"),
     Input(component_id="memory_annual_income_gross", component_property="data"),
-    Input(component_id="memory_removal_rate", component_property="data"),
+    Input(component_id="retirement_removal_rate", component_property="value"),
 )
 def update_income_sum(gross_income, removal_rate):
     income_sum = int(gross_income / (removal_rate / 100))
@@ -395,51 +381,15 @@ def update_target_met_year(target_met_year):
         dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),
     ]
 
-@callback(
-    Output(component_id="memory_monthly_income", component_property="data"),
-    Input(component_id="retirement_monthly_income", component_property="value"),
-)
-def store_monthly_income(monthly_income):
-    return int(monthly_income)
-
-@callback(
-    Output(component_id="memory_expected_returns", component_property="data"),
-    Input(component_id="retirement_expected_returns", component_property="value"),
-)
-def store_expected_returns(expected_returns):
-    return expected_returns
-
-@callback(
-    Output(component_id="memory_inflation_rate", component_property="data"),
-    Input(component_id="retirement_inflation_rate", component_property="value"),
-)
-def store_inflation_rate(inflation_rate):
-    return inflation_rate
-
-@callback(
-    Output(component_id="memory_removal_rate", component_property="data"),
-    Input(component_id="retirement_removal_rate", component_property="value"),
-)
-def store_removal_rate(removal_rate):
-    return float(removal_rate)
-
-@callback(
-    Output(component_id="memory_annual_contribution", component_property="data"),
-    Input(component_id="retirement_annual_contribution", component_property="value"),
-)
-def store_annual_contribution(annual_contribution):
-    return annual_contribution
 
 
 @callback(
-    Output(component_id="memory_lump_sum", component_property="data"),
     Output(component_id="memory_total_sum", component_property="data"),
     Input(component_id="memory_income_sum", component_property="data"),
     Input(component_id="retirement_lump_sum", component_property="value"),
 )
 def store_lump_sum(income_sum, lump_sum):
-    lump_sum = int(lump_sum)
-    return (lump_sum, lump_sum + income_sum)
+    return lump_sum + income_sum
 
 
 @callback(
@@ -457,7 +407,7 @@ def update_annual_income(net_income, gross_income):
 @callback(
     Output(component_id="memory_annual_income_net", component_property="data"),
     Output(component_id="memory_annual_income_gross", component_property="data"),
-    Input(component_id="memory_monthly_income", component_property="data"),
+    Input(component_id="retirement_monthly_income", component_property="value"),
 )
 def store_annual_income(monthly_income):
     annual_income_net = int(monthly_income) * 12
@@ -508,9 +458,9 @@ def radio_button_actions(sort_col):
     Output(component_id="retirements_model_graph", component_property="figure"),
     Output(component_id="memory_target_met_year", component_property="data"),
     Input(component_id="memory_total_sum", component_property="data"),
-    Input(component_id="memory_expected_returns", component_property="data"),
-    Input(component_id="memory_inflation_rate", component_property="data"),
-    Input(component_id="memory_annual_contribution", component_property="data"),
+    Input(component_id="retirement_expected_returns", component_property="value"),
+    Input(component_id="retirement_inflation_rate", component_property="value"),
+    Input(component_id="retirement_annual_contribution", component_property="value"),
 )
 def update_model_graph(target, returns, inflation, contributions):
     net_returns = 1 + (returns - inflation) / 100
