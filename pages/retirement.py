@@ -1,7 +1,9 @@
+import math
+from typing import Any
+
 import dash_mantine_components as dmc
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc, html
-import math
 
 import dash_format
 import utils
@@ -331,9 +333,11 @@ def retirements_radiogroup():
         dmc.RadioGroup(
             retirements_radios(),
             id="retirement_performance_radio",
-            value="radio_year3_percent",
+            # value="radio_year3_percent",
             size="sm",
             orientation="horizontal",
+            persistence_type="local",
+            persistence = True
         )
     ]
 
@@ -345,6 +349,18 @@ def retirements_radios() -> list[dmc.Radio]:
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
 
+def calculate_gross_income(annual_income_net: float) -> float:
+    """Given the net income that aiming for, estimate the annual gross income based on income tax
+    thresholds
+    """
+
+    lower_rate_tax = 0.2
+    personal_allowance = 12_000
+    if annual_income_net > personal_allowance:
+        annual_income_gross = ((annual_income_net - personal_allowance) / (1 - lower_rate_tax)) + personal_allowance
+    else:
+        annual_income_gross = annual_income_net
+    return annual_income_gross
 
 #  Callbacks
 @callback(
@@ -362,7 +378,6 @@ def update_income_sum(gross_income, removal_rate):
         income_sum,
     )
 
-
 @callback(
     Output(component_id="retirement_total_sum", component_property="children"),
     Input(component_id="memory_total_sum", component_property="data"),
@@ -377,10 +392,7 @@ def update_total_sum(total_sum):
     Input(component_id="memory_target_met_year", component_property="data"),
 )
 def update_target_met_year(target_met_year):
-    return [
-        dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),
-    ]
-
+    return [dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),]
 
 
 @callback(
@@ -409,15 +421,10 @@ def update_annual_income(net_income, gross_income):
     Output(component_id="memory_annual_income_gross", component_property="data"),
     Input(component_id="retirement_monthly_income", component_property="value"),
 )
-def store_annual_income(monthly_income):
-    annual_income_net = int(monthly_income) * 12
-    LOWER_RATE_TAX = 0.2
-    PERSONAL_ALLOWANCE = 12_000
-    if annual_income_net > PERSONAL_ALLOWANCE:
-        annual_income_gross = ((annual_income_net - PERSONAL_ALLOWANCE) / (1 - LOWER_RATE_TAX)) + PERSONAL_ALLOWANCE
-    else:
-        annual_income_gross = annual_income_net
-    return (annual_income_net, annual_income_gross)
+def store_annual_income(monthly_income: int):
+    annual_income_net = monthly_income * 12
+    annual_income_gross = calculate_gross_income(annual_income_net)
+    return annual_income_net, annual_income_gross
 
 
 @callback(
@@ -433,10 +440,9 @@ def update_graph(active_cell, sort_col):
         cell_value = sorted_summary[data_row]["commodity"]
     else:
         cell_value = "AZ Diversified"
-    title = [row["commodity_name"] for row in sorted_summary if row["commodity"] == cell_value][0]
-    fig = px.line(prices, x="date", y=cell_value, title=title)
+    title = next(row["commodity_name"] for row in sorted_summary if row["commodity"] == cell_value)
+    return px.line(prices, x="date", y=cell_value, title=title)
 
-    return fig
 
 
 @callback(
@@ -453,7 +459,6 @@ def radio_button_actions(sort_col):
         col = f"annualised{year}_percent"
     return update_bar_chart(col), update_table(col), update_tooltips(col)
 
-
 @callback(
     Output(component_id="retirements_model_graph", component_property="figure"),
     Output(component_id="memory_target_met_year", component_property="data"),
@@ -465,33 +470,103 @@ def radio_button_actions(sort_col):
 def update_model_graph(target, returns, inflation, contributions):
     net_returns = 1 + (returns - inflation) / 100
     start_year_idx, start_value = get_model_start(value_model=value_model)
-    model_value = start_value
-    target_met_year = None
-    for idx, year in enumerate(value_model):
-        if idx == start_year_idx-1:
-            year["model"] = model_value
-        elif idx >= start_year_idx:
-            print(f"{model_value=}, {year["model"]=}, {net_returns=}, {contributions=}, {idx=}")
-            model_value = (model_value * net_returns) + contributions
-            year["model"] = model_value
+    calculate_model_values(value_model=value_model,
+                           start_value=start_value,
+                           start_year_idx=start_year_idx,
+                           net_returns=net_returns,
+                           contributions=contributions,
+                           )
 
+    #  Set the value of the target amount
     for year in value_model:
         year["target"] = target
-    for year in value_model:
-        if year["model"] >= target:
-            target_met_year = year
-            break
+
+    #  Get dict representing the year that the target value is reached
+    target_met_year = get_retirement_year(value_model=value_model, target=target)
+
     return (px.line(
         value_model,
         x="year",
         y=["actual_values", "target", "model"],
     ), target_met_year)
 
+def calculate_model_values(value_model: list[dict[str, Any]],
+                           start_value: int|float,
+                           start_year_idx: int,
+                           net_returns: float,
+                           contributions: int,
+                           ):
+    """Works out the modelled pension pot starting from the start year until the final year in `actual_values` and
+    inserts the values in-place into the `model` field.
 
-def get_model_start(value_model):
-    current_value = 0
+    Parameters
+    ----------
+    value_model: list[dict[str, Any]]
+        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
+    start_value: int|float
+        The starting value of the model (the final value of the `actual_value` field)
+    start_year_idx: int
+        Index of `value_model`
+    net_returns: float
+        Returns net of inflation
+    contributions: int
+        Annual contributions paid into the pension pot
+
+    Returns
+    -------
+    None
+
+    """
+    for idx, year in enumerate(value_model):
+        if idx == start_year_idx-1:
+            year["model"] = start_value
+            model_value=start_value
+        elif idx >= start_year_idx:
+            model_value = (model_value * net_returns) + contributions
+            year["model"] = model_value
+
+
+def get_retirement_year(value_model: list[dict[str, Any]], target: int|float) -> dict[str, Any] | None:
+    """Gets the dictionary corresponding to the first year that the modelled value is as big or bigger than the target value
+
+    Parameters
+    ----------
+    value_model: list[dict[str, Any]]
+        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
+    target: int|float
+        The target value of the pension pot
+
+    Returns
+    -------
+    dict[str, Any]
+        One `year` from the `value_model`
+    """
+    for year in value_model:
+        if year["model"] >= target:
+            return year
+    return
+
+
+def get_model_start(value_model: list[dict[str, Any]]) -> tuple[int, float|int]:
+    """Get the index and value of the first year that requires modelling
+
+    Parameters
+    ----------
+    value_model: list[dict[str, Any]]
+        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
+
+    Returns
+    -------
+    tuple[int, float|int]
+        Tuple of the index of `value_model` and
+
+    """
     for idx, year in enumerate(value_model):
         if math.isnan(year["actual_values"]):
-            return idx, current_value
-        current_value = year["actual_values"]
-    return idx, current_value
+            break
+    try:
+        starting_value_for_model = value_model[idx-1]["actual_values"]
+    except IndexError as err:
+        print("No `actual_values` available to start model", err)
+        raise
+    return idx, starting_value_for_model

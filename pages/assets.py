@@ -5,7 +5,6 @@ from dash import Input, Output, callback, dash_table, dcc
 import dash_format
 import utils
 
-
 assets_time_series = utils.csv_to_dict("assets_time_series.csv")
 latest_values = utils.csv_to_dict("assets_latest_summary.csv")
 
@@ -40,6 +39,8 @@ def asset_checkboxgroup():
         id="asset_overview_checkboxes",
         size="sm",
         orientation="vertical",
+        persistence=True,
+        persistence_type="local",
     )
 
 
@@ -70,5 +71,4 @@ def create_layout():
     Input(component_id="asset_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    fig = px.line(assets_time_series, x="date", y=col_chosen)
-    return fig
+    return px.line(assets_time_series, x="date", y=col_chosen)
