@@ -1,13 +1,14 @@
-import dash_mantine_components as dmc
-from dash import html
+import json
 import platform
 
+import dash_mantine_components as dmc
+from dash import html
+
 import utils
-import json
 
 DATA_OUTPUT_FORMAT = {"font-family": "monospace", "color": "gray", "fontSize": 14}
 
-with open(utils.DATA_PATH / "update_log.json", "r") as f:
+with open(utils.DATA_PATH / "update_log.json") as f:
     update_data = json.load(f)
 
 update_date = update_data["time"]

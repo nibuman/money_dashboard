@@ -243,12 +243,16 @@ def retirements_modelling_graph():
         id="retirements_model_graph",
     )
 
+
 NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence_type": "local", "persistence": True}
+
+
 def retirements_modelling_parameters():
     return dmc.Stack(
         children=[
             dmc.Title("Model Parameters", color="blue", size="h2"),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_monthly_income",
                 label="Monthly income (present prices):",
                 value=2000,
@@ -265,7 +269,8 @@ def retirements_modelling_parameters():
                     dmc.TextInput("Annual income (gross, present value): £0"),
                 ],
             ),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_removal_rate",
                 label="Removal rate (%)",
                 value=3,
@@ -281,7 +286,8 @@ def retirements_modelling_parameters():
                     dmc.Text("Required sum to produce income: £0"),
                 ],
             ),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_lump_sum",
                 label="Lump sum",
                 value=0,
@@ -295,21 +301,24 @@ def retirements_modelling_parameters():
                     dmc.Text("Total sum required: £0"),
                 ],
             ),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_expected_returns",
                 label="Expected returns (%)",
                 value=8,
                 step=0.05,
                 precision=2,
             ),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_inflation_rate",
                 label="Inflation rate (%)",
                 value=3.5,
                 step=0.05,
                 precision=2,
             ),
-            dmc.NumberInput(**NUMBER_INPUT_SETTINGS,
+            dmc.NumberInput(
+                **NUMBER_INPUT_SETTINGS,
                 id="retirement_annual_contribution",
                 label="Annual contribution (present prices):",
                 value=0,
@@ -318,11 +327,9 @@ def retirements_modelling_parameters():
             ),
             dcc.Store(id="memory_target_met_year", storage_type="local", data={"year": "NA", "age": "NA"}),
             html.Div(
-            id="retirement_target_met_year",
-            children=[
-                dmc.Text("Target met at age N/A in N/A")
-            ],
-        ),
+                id="retirement_target_met_year",
+                children=[dmc.Text("Target met at age N/A in N/A")],
+            ),
         ],
     )
 
@@ -333,11 +340,11 @@ def retirements_radiogroup():
         dmc.RadioGroup(
             retirements_radios(),
             id="retirement_performance_radio",
-            # value="radio_year3_percent",
+            value="radio_year3_percent",
             size="sm",
             orientation="horizontal",
             persistence_type="local",
-            persistence = True
+            persistence=True,
         )
     ]
 
@@ -349,11 +356,21 @@ def retirements_radios() -> list[dmc.Radio]:
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
 
-def calculate_gross_income(annual_income_net: float) -> float:
-    """Given the net income that aiming for, estimate the annual gross income based on income tax
-    thresholds
-    """
 
+def calculate_gross_income(annual_income_net: float) -> float:
+    """Estimate the gross income required to give a certain net income. Based on current income
+    tax bands
+
+    Parameters
+    ----------
+    annual_income_net : float
+        Annual net income
+
+    Returns
+    -------
+    float
+        Annual gross income
+    """
     lower_rate_tax = 0.2
     personal_allowance = 12_000
     if annual_income_net > personal_allowance:
@@ -361,6 +378,7 @@ def calculate_gross_income(annual_income_net: float) -> float:
     else:
         annual_income_gross = annual_income_net
     return annual_income_gross
+
 
 #  Callbacks
 @callback(
@@ -378,6 +396,7 @@ def update_income_sum(gross_income, removal_rate):
         income_sum,
     )
 
+
 @callback(
     Output(component_id="retirement_total_sum", component_property="children"),
     Input(component_id="memory_total_sum", component_property="data"),
@@ -387,12 +406,15 @@ def update_total_sum(total_sum):
         dmc.Text(f"Total sum required: £{total_sum}"),
     ]
 
+
 @callback(
     Output(component_id="retirement_target_met_year", component_property="children"),
     Input(component_id="memory_target_met_year", component_property="data"),
 )
 def update_target_met_year(target_met_year):
-    return [dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),]
+    return [
+        dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),
+    ]
 
 
 @callback(
@@ -444,7 +466,6 @@ def update_graph(active_cell, sort_col):
     return px.line(prices, x="date", y=cell_value, title=title)
 
 
-
 @callback(
     Output("retirement_performance_bar_chart", "figure"),
     Output("retirement_performance_table", "data"),
@@ -459,6 +480,7 @@ def radio_button_actions(sort_col):
         col = f"annualised{year}_percent"
     return update_bar_chart(col), update_table(col), update_tooltips(col)
 
+
 @callback(
     Output(component_id="retirements_model_graph", component_property="figure"),
     Output(component_id="memory_target_met_year", component_property="data"),
@@ -470,12 +492,13 @@ def radio_button_actions(sort_col):
 def update_model_graph(target, returns, inflation, contributions):
     net_returns = 1 + (returns - inflation) / 100
     start_year_idx, start_value = get_model_start(value_model=value_model)
-    calculate_model_values(value_model=value_model,
-                           start_value=start_value,
-                           start_year_idx=start_year_idx,
-                           net_returns=net_returns,
-                           contributions=contributions,
-                           )
+    calculate_model_values(
+        value_model=value_model,
+        start_value=start_value,
+        start_year_idx=start_year_idx,
+        net_returns=net_returns,
+        contributions=contributions,
+    )
 
     #  Set the value of the target amount
     for year in value_model:
@@ -484,18 +507,23 @@ def update_model_graph(target, returns, inflation, contributions):
     #  Get dict representing the year that the target value is reached
     target_met_year = get_retirement_year(value_model=value_model, target=target)
 
-    return (px.line(
-        value_model,
-        x="year",
-        y=["actual_values", "target", "model"],
-    ), target_met_year)
+    return (
+        px.line(
+            value_model,
+            x="year",
+            y=["actual_values", "target", "model"],
+        ),
+        target_met_year,
+    )
 
-def calculate_model_values(value_model: list[dict[str, Any]],
-                           start_value: int|float,
-                           start_year_idx: int,
-                           net_returns: float,
-                           contributions: int,
-                           ):
+
+def calculate_model_values(
+    value_model: list[dict[str, Any]],
+    start_value: int | float,
+    start_year_idx: int,
+    net_returns: float,
+    contributions: int,
+):
     """Works out the modelled pension pot starting from the start year until the final year in `actual_values` and
     inserts the values in-place into the `model` field.
 
@@ -518,16 +546,17 @@ def calculate_model_values(value_model: list[dict[str, Any]],
 
     """
     for idx, year in enumerate(value_model):
-        if idx == start_year_idx-1:
+        if idx == start_year_idx - 1:
             year["model"] = start_value
-            model_value=start_value
+            model_value = start_value
         elif idx >= start_year_idx:
             model_value = (model_value * net_returns) + contributions
             year["model"] = model_value
 
 
-def get_retirement_year(value_model: list[dict[str, Any]], target: int|float) -> dict[str, Any] | None:
-    """Gets the dictionary corresponding to the first year that the modelled value is as big or bigger than the target value
+def get_retirement_year(value_model: list[dict[str, Any]], target: int | float) -> dict[str, Any] | None:
+    """Gets the dictionary corresponding to the first year that the modelled value is as big or
+     bigger than the target value
 
     Parameters
     ----------
@@ -547,7 +576,7 @@ def get_retirement_year(value_model: list[dict[str, Any]], target: int|float) ->
     return
 
 
-def get_model_start(value_model: list[dict[str, Any]]) -> tuple[int, float|int]:
+def get_model_start(value_model: list[dict[str, Any]]) -> tuple[int, float | int]:
     """Get the index and value of the first year that requires modelling
 
     Parameters
@@ -565,7 +594,7 @@ def get_model_start(value_model: list[dict[str, Any]]) -> tuple[int, float|int]:
         if math.isnan(year["actual_values"]):
             break
     try:
-        starting_value_for_model = value_model[idx-1]["actual_values"]
+        starting_value_for_model = value_model[idx - 1]["actual_values"]
     except IndexError as err:
         print("No `actual_values` available to start model", err)
         raise

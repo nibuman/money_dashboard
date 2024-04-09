@@ -1,7 +1,7 @@
-import datetime
-import pathlib
 import csv
+import datetime
 import math
+import pathlib
 from functools import partial
 
 BASE_PATH = pathlib.Path(__file__).parent
@@ -28,7 +28,7 @@ def _sort_key(row: dict[str, float | str], col: str) -> float | str:
 
 
 def csv_to_dict(file_name: str) -> table_data:
-    with open(DATA_PATH / file_name, "r") as f:
+    with open(DATA_PATH / file_name) as f:
         csv_data = list(csv.DictReader(f))
     for row in csv_data:
         for col, value in row.items():

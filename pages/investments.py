@@ -1,11 +1,10 @@
 import dash_mantine_components as dmc
-
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
+
 import dash_format
 import utils
 from dash_format import money_format, number_format, percent_format, percent_format_pos
-
 
 summary = utils.csv_to_dict("investments_summary.csv")
 prices = utils.csv_to_dict("investments_price_time_series.csv")

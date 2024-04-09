@@ -2,7 +2,7 @@ import dash_mantine_components as dmc
 from dash import Dash, dcc
 
 # from money_dashboard import investments, retirement
-from pages import assets, investments, retirement, info
+from pages import assets, info, investments, retirement
 
 # Initialize the app - incorporate a Dash Mantine theme
 external_stylesheets = [dmc.theme.DEFAULT_COLORS]
