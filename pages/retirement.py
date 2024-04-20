@@ -1,9 +1,6 @@
-import math
-from typing import Any
-
 import dash_mantine_components as dmc
 import plotly.express as px
-from dash import Input, Output, callback, dash_table, dcc, html
+from dash import Input, Output, callback, dash_table, dcc
 
 import dash_format
 import utils
@@ -225,8 +222,8 @@ def retirement_mix_pie():
     ]
 
 
-
 NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence_type": "local", "persistence": True}
+
 
 #  Radio buttons
 def retirements_radiogroup():
