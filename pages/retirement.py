@@ -516,7 +516,6 @@ def update_model_graph(target, returns, inflation, contributions):
         target_met_year,
     )
 
-
 def calculate_model_values(
     value_model: list[dict[str, Any]],
     start_value: int | float,
@@ -545,10 +544,10 @@ def calculate_model_values(
     None
 
     """
+    model_value = start_value
     for idx, year in enumerate(value_model):
         if idx == start_year_idx - 1:
             year["model"] = start_value
-            model_value = start_value
         elif idx >= start_year_idx:
             model_value = (model_value * net_returns) + contributions
             year["model"] = model_value
