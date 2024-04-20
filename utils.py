@@ -19,12 +19,11 @@ def sort_data(data: table_data, *, column: str, sort_ascending: bool = False) ->
 
 
 def _sort_key(row: dict[str, float | str], col: str) -> float | str:
-    if isinstance(row[col], str):
-        return row[col]
-    elif math.isnan(row[col]):
+    value = row[col]
+    if isinstance(value, float) and math.isnan(value):
         return float("-inf")
     else:
-        return row[col]
+        return value
 
 
 def csv_to_dict(file_name: str) -> table_data:
