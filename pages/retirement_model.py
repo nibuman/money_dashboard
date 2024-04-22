@@ -58,6 +58,7 @@ class RetirementModel:
                 "Actual Values": self.actual_values,
                 "Target": self.target,
                 "Model Values": self.model_values,
+                "Age": self.age,
             }
         )
 
@@ -82,7 +83,6 @@ def create_layout():
                     [
                         dmc.Col(
                             [
-                                # dmc.Col(test(), span=12),
                                 dmc.Col(retirements_modelling_graph(), span=12),
                                 dmc.Col(retirements_modelling_parameters(), span=12),
                             ],
@@ -309,6 +309,7 @@ def update_model_graph(target, returns, inflation, contributions):
             model.as_df(),
             x="Year",
             y=["Actual Values", "Target", "Model Values"],
+            hover_data=["Age"]
         ),
         [
             dmc.Text(f"Target met at age {model.target_met_age} in {model.target_met_year}"),
