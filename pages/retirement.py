@@ -23,20 +23,15 @@ def create_layout():
                     [
                         dmc.Col(
                             [
-                                dmc.Col(retirements_graph(), span=12),
-                                dmc.Col(retirement_average_returns_table(), span=12),
-                                dmc.Col(retirements_radiogroup(), span=12),
-                                dmc.Col(retirement_performance_table(), span=12),
+                                retirements_graph(),
+                                retirement_average_returns_table(),
                             ],
                             span=7,
                         ),
-                        dmc.Col(
-                            [
-                                dmc.Col(retirements_performance_graph(), span=12),
-                                # dmc.Col(retirement_mix_pie(), span=10),
-                            ],
-                            span=5,
-                        ),
+                        dmc.Col(retirements_performance_graph(), span=5),
+                        dmc.Col(retirements_radiogroup(), span=7),
+                        dmc.Col(retirement_performance_table(), span=11),
+                        dmc.Col(retirement_mix_pie(), span=10),
                     ]
                 ),
             ],

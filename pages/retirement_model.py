@@ -1,11 +1,66 @@
 import math
-from typing import Any
 
 import dash_mantine_components as dmc
+import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dcc, html
 
 import utils
+
+
+class RetirementModel:
+    def __init__(self, model_data: list[dict[str, str | float]]) -> None:
+        self.year = [int(row["year"]) for row in model_data]
+        self.age = [int(row["age"]) for row in model_data]
+        self.actual_values = [float(row["actual_values"]) for row in model_data]
+        self.target = [850_000] * len(self.year)
+        self.model_values = [float("nan")] * len(self.year)
+
+    def calculate_model_value(self, net_returns, contributions):
+        model_value = self.actual_values[self.start_year_index]
+        for idx, _ in enumerate(self.model_values):
+            if idx < self.start_year_index:
+                continue
+            elif idx == self.start_year_index:
+                pass
+            else:
+                model_value = (model_value * net_returns) + contributions
+            self.model_values[idx] = model_value
+
+    @property
+    def start_year_index(self) -> int:
+        for idx, value in enumerate(self.actual_values):
+            if math.isnan(value):
+                return idx - 1
+        raise ValueError
+
+    def set_target(self, target_value):
+        self.target = [target_value] * len(self.year)
+
+    @property
+    def target_met_year(self) -> int:
+        for year, value in zip(self.year, self.model_values):
+            if value >= self.target[0]:
+                return year
+        raise ValueError
+
+    @property
+    def target_met_age(self) -> int:
+        for age, value in zip(self.age, self.model_values):
+            if value >= self.target[0]:
+                return age
+        raise ValueError
+
+    def as_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "Year": self.year,
+                "Actual Values": self.actual_values,
+                "Target": self.target,
+                "Model Values": self.model_values,
+            }
+        )
+
 
 summary = utils.csv_to_dict("retirement_summary.csv")
 prices = utils.csv_to_dict("retirement_price_time_series.csv")
@@ -13,7 +68,7 @@ avg_returns = utils.csv_to_dict("retirement_average_returns.csv")
 grouped_assets = utils.csv_to_dict("retirement_grouped_by_type.csv")
 value_model = utils.csv_to_dict("retirement_value_model.csv")
 total_value = sum(float(row["value"]) for row in summary)
-
+model = RetirementModel(value_model)
 dcc.Store(id="memory_value_model", data=value_model)
 
 
@@ -27,6 +82,7 @@ def create_layout():
                     [
                         dmc.Col(
                             [
+                                # dmc.Col(test(), span=12),
                                 dmc.Col(retirements_modelling_graph(), span=12),
                                 dmc.Col(retirements_modelling_parameters(), span=12),
                             ],
@@ -40,15 +96,12 @@ def create_layout():
     ]
 
 
-#  Retirement modelling
 def retirements_modelling_graph():
-    for year in value_model:
-        year["target"] = 850_000
     return dcc.Graph(
         figure=px.line(
-            value_model,
-            x="year",
-            y=["actual_values", "target"],
+            model.as_df(),
+            x="Year",
+            y=["Actual Values", "Target", "Model Values"],
         ),
         id="retirements_model_graph",
     )
@@ -146,7 +199,6 @@ def retirements_modelling_parameters():
                         min=0,
                         step=1000,
                     ),
-                    dcc.Store(id="memory_target_met_year", storage_type="local", data={"year": "NA", "age": "NA"}),
                     html.Div(
                         id="retirement_target_met_year",
                         children=[dmc.Text("Target met at age N/A in N/A")],
@@ -209,16 +261,6 @@ def update_total_sum(total_sum):
 
 
 @callback(
-    Output(component_id="retirement_target_met_year", component_property="children"),
-    Input(component_id="memory_target_met_year", component_property="data"),
-)
-def update_target_met_year(target_met_year):
-    return [
-        dmc.Text(f"Target met at age {target_met_year["age"]} in {target_met_year["year"]}"),
-    ]
-
-
-@callback(
     Output(component_id="memory_total_sum", component_property="data"),
     Input(component_id="memory_income_sum", component_property="data"),
     Input(component_id="retirement_lump_sum", component_property="value"),
@@ -252,7 +294,7 @@ def store_annual_income(monthly_income: int):
 
 @callback(
     Output(component_id="retirements_model_graph", component_property="figure"),
-    Output(component_id="memory_target_met_year", component_property="data"),
+    Output(component_id="retirement_target_met_year", component_property="children"),
     Input(component_id="memory_total_sum", component_property="data"),
     Input(component_id="retirement_expected_returns", component_property="value"),
     Input(component_id="retirement_inflation_rate", component_property="value"),
@@ -260,111 +302,15 @@ def store_annual_income(monthly_income: int):
 )
 def update_model_graph(target, returns, inflation, contributions):
     net_returns = 1 + (returns - inflation) / 100
-    start_year_idx, start_value = get_model_start(value_model=value_model)
-    calculate_model_values(
-        value_model=value_model,
-        start_value=start_value,
-        start_year_idx=start_year_idx,
-        net_returns=net_returns,
-        contributions=contributions,
-    )
-
-    #  Set the value of the target amount
-    for year in value_model:
-        year["target"] = target
-
-    #  Get dict representing the year that the target value is reached
-    target_met_year = get_retirement_year(value_model=value_model, target=target)
-
+    model.calculate_model_value(net_returns=net_returns, contributions=contributions)
+    model.set_target(target_value=target)
     return (
         px.line(
-            value_model,
-            x="year",
-            y=["actual_values", "target", "model"],
+            model.as_df(),
+            x="Year",
+            y=["Actual Values", "Target", "Model Values"],
         ),
-        target_met_year,
+        [
+            dmc.Text(f"Target met at age {model.target_met_age} in {model.target_met_year}"),
+        ],
     )
-
-
-def calculate_model_values(
-    value_model: list[dict[str, Any]],
-    start_value: int | float,
-    start_year_idx: int,
-    net_returns: float,
-    contributions: int,
-):
-    """Works out the modelled pension pot starting from the start year until the final year in `actual_values` and
-    inserts the values in-place into the `model` field.
-
-    Parameters
-    ----------
-    value_model: list[dict[str, Any]]
-        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
-    start_value: int|float
-        The starting value of the model (the final value of the `actual_value` field)
-    start_year_idx: int
-        Index of `value_model`
-    net_returns: float
-        Returns net of inflation
-    contributions: int
-        Annual contributions paid into the pension pot
-
-    Returns
-    -------
-    None
-
-    """
-    model_value = start_value
-    for idx, year in enumerate(value_model):
-        if idx == start_year_idx - 1:
-            year["model"] = start_value
-        elif idx >= start_year_idx:
-            model_value = (model_value * net_returns) + contributions
-            year["model"] = model_value
-
-
-def get_retirement_year(value_model: list[dict[str, Any]], target: int | float) -> dict[str, Any] | None:
-    """Gets the dictionary corresponding to the first year that the modelled value is as big or
-     bigger than the target value
-
-    Parameters
-    ----------
-    value_model: list[dict[str, Any]]
-        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
-    target: int|float
-        The target value of the pension pot
-
-    Returns
-    -------
-    dict[str, Any]
-        One `year` from the `value_model`
-    """
-    for year in value_model:
-        if year["model"] >= target:
-            return year
-    return
-
-
-def get_model_start(value_model: list[dict[str, Any]]) -> tuple[int, float | int]:
-    """Get the index and value of the first year that requires modelling
-
-    Parameters
-    ----------
-    value_model: list[dict[str, Any]]
-        The entire model data. Each year is a dict with `year`, `date`, `actual_value`, `target`, and `model` fields
-
-    Returns
-    -------
-    tuple[int, float|int]
-        Tuple of the index of `value_model` and
-
-    """
-    for idx, year in enumerate(value_model):
-        if math.isnan(year["actual_values"]):
-            break
-    try:
-        starting_value_for_model = value_model[idx - 1]["actual_values"]
-    except IndexError as err:
-        print("No `actual_values` available to start model", err)
-        raise
-    return idx, starting_value_for_model
