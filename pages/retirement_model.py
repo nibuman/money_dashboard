@@ -13,7 +13,7 @@ class RetirementModel:
         self.year = [int(row["year"]) for row in model_data]
         self.age = [int(row["age"]) for row in model_data]
         self.actual_values = [float(row["actual_values"]) for row in model_data]
-        self.target = [850_000] * len(self.year)
+        self.target = [0] * len(self.year)
         self.model_values = [float("nan")] * len(self.year)
 
     def calculate_model_value(self, net_returns, contributions):
@@ -305,12 +305,7 @@ def update_model_graph(target, returns, inflation, contributions):
     model.calculate_model_value(net_returns=net_returns, contributions=contributions)
     model.set_target(target_value=target)
     return (
-        px.line(
-            model.as_df(),
-            x="Year",
-            y=["Actual Values", "Target", "Model Values"],
-            hover_data=["Age"]
-        ),
+        px.line(model.as_df(), x="Year", y=["Actual Values", "Target", "Model Values"], hover_data=["Age"]),
         [
             dmc.Text(f"Target met at age {model.target_met_age} in {model.target_met_year}"),
         ],
