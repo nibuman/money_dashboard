@@ -210,7 +210,7 @@ def retirements_modelling_parameters():
     )
 
 
-def calculate_gross_income(annual_income_net: float) -> float:
+def calculate_gross_income(annual_income_net: float, tax_free_fraction: float = 0.25) -> float | int:
     """Estimate the gross income required to give a certain net income. Based on current income
     tax bands
 
@@ -225,12 +225,14 @@ def calculate_gross_income(annual_income_net: float) -> float:
         Annual gross income
     """
     lower_rate_tax = 0.2
-    personal_allowance = 12_000
-    if annual_income_net > personal_allowance:
-        annual_income_gross = ((annual_income_net - personal_allowance) / (1 - lower_rate_tax)) + personal_allowance
-    else:
-        annual_income_gross = annual_income_net
-    return annual_income_gross
+    personal_allowance = 12_570
+    taxable_fraction = 1 - tax_free_fraction
+    tax_payable = ((taxable_fraction * annual_income_net - personal_allowance) * lower_rate_tax) / (
+        1 - taxable_fraction * lower_rate_tax
+    )
+    if tax_payable <= 0:
+        tax_payable = 0
+    return annual_income_net + tax_payable
 
 
 #  Callbacks
@@ -277,7 +279,8 @@ def store_lump_sum(income_sum, lump_sum):
 def update_annual_income(net_income, gross_income):
     return [
         dmc.Text(f"Annual income (net, present value): £{net_income}"),
-        dmc.Text(f"Annual income (gross, present value): £{gross_income}"),
+        dmc.Text(f"Annual income (gross, present value): £{gross_income:.0f}"),
+        dmc.Text("(Assumes 25% of income is taken from pension pot tax-free)"),
     ]
 
 

@@ -37,7 +37,7 @@ Issues = "https://github.com/unknown/money-dashboard/issues"
 Source = "https://github.com/unknown/money-dashboard"
 
 [tool.hatch.version]
-path = "src/money_dashboard/__about__.py"
+path = "./__about__.py"
 
 [tool.hatch.envs.default]
 dependencies = [
@@ -55,6 +55,9 @@ cov = [
   "test-cov",
   "cov-report",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["pages"]
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.11", "3.12"]
@@ -81,11 +84,6 @@ all = [
   "style",
   "typing",
 ]
-
-[tool.black]
-target-version = ["py37"]
-line-length = 120
-skip-string-normalization = true
 
 [tool.ruff]
 target-version = "py37"
