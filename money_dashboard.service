@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to server money_dashboard
+After=network.target
+
+[Service]
+User=pi
+Group=www-data
+WorkingDirectory=/home/pi/money_dashboard
+Environment="PATH=/home/pi/money_dashboard/venv/bin"
+ExecStart=/home/pi/money_dashboard/venv/bin/python3 -m gunicorn --workers 3 --bind unix:money_dashboard.sock -m 007 wsgi:server
+
+[Install]
+WantedBy=multi-user.target
+

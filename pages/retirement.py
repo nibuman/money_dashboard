@@ -18,20 +18,20 @@ def create_layout():
     return [
         dmc.Container(
             [
-                dmc.Title("Retirement Investments", color="blue", size="h3"),
+                dmc.Title("Retirement Investments", order=3),
                 dmc.Grid(
                     [
-                        dmc.Col(
+                        dmc.GridCol(
                             [
                                 retirements_graph(),
                                 retirement_average_returns_table(),
                             ],
                             span=7,
                         ),
-                        dmc.Col(retirements_performance_graph(), span=5),
-                        dmc.Col(retirements_radiogroup(), span=7),
-                        dmc.Col(retirement_performance_table(), span=11),
-                        dmc.Col(retirement_mix_pie(), span=10),
+                        dmc.GridCol(retirements_performance_graph(), span=5),
+                        dmc.GridCol(retirements_radiogroup(), span=7),
+                        dmc.GridCol(retirement_performance_table(), span=11),
+                        dmc.GridCol(retirement_mix_pie(), span=10),
                     ]
                 ),
             ],
@@ -209,7 +209,7 @@ def retirement_mix_pie():
                 grouped_assets,
                 names="commodity_type",
                 values="type_value",
-                # title=f"Current mix. Total value = £{total_value:,.0f}",
+                title=f"Current mix. Total value = £{total_value:,.0f}",
                 hover_data="commodities",
             ),
             id="retirement_mix_pie",
@@ -224,11 +224,10 @@ NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence
 def retirements_radiogroup():
     return [
         dmc.RadioGroup(
-            retirements_radios(),
+            children=dmc.Group(retirements_radios()),
             id="retirement_performance_radio",
             value="radio_year3_percent",
             size="sm",
-            orientation="horizontal",
             persistence_type="local",
             persistence=True,
         )

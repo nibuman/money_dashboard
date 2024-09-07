@@ -35,11 +35,10 @@ def asset_graph():
 
 def asset_checkboxgroup():
     return dmc.CheckboxGroup(
-        asset_checkbox(),
+        children=dmc.Stack(asset_checkbox()),
         id="asset_overview_checkboxes",
         size="sm",
-        orientation="vertical",
-        persistence=True,
+        persistence=False,
         persistence_type="local",
     )
 
@@ -52,12 +51,12 @@ def create_layout():
     return [
         dmc.Container(
             [
-                dmc.Title("Finance Overview", color="blue", size="h3"),
+                dmc.Title("Finance Overview", order=3),
                 dmc.Grid(
                     [
-                        dmc.Col([asset_table()], span=11),
-                        dmc.Col([asset_checkboxgroup()], span=2),
-                        dmc.Col([asset_graph()], span=8),
+                        dmc.GridCol([asset_table()], span=11),
+                        dmc.GridCol([asset_checkboxgroup()], span=2),
+                        dmc.GridCol([asset_graph()], span=8),
                     ]
                 ),
             ],

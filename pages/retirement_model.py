@@ -9,6 +9,8 @@ import utils
 
 
 class RetirementModel:
+    "Models growth of retirement fund starting from the last year that money was paid in"
+
     def __init__(self, model_data: list[dict[str, str | float]]) -> None:
         self.year = [int(row["year"]) for row in model_data]
         self.age = [int(row["age"]) for row in model_data]
@@ -78,13 +80,13 @@ def create_layout():
     return [
         dmc.Container(
             [
-                dmc.Title("Retirement Model", color="blue", size="h3"),
+                dmc.Title("Retirement Model", order=3),
                 dmc.Grid(
                     [
-                        dmc.Col(
+                        dmc.GridCol(
                             [
-                                dmc.Col(retirements_modelling_graph(), span=12),
-                                dmc.Col(retirements_modelling_parameters(), span=12),
+                                dmc.GridCol(retirements_modelling_graph(), span=12),
+                                dmc.GridCol(retirements_modelling_parameters(), span=12),
                             ],
                             span=12,
                         ),
@@ -113,7 +115,7 @@ NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence
 def retirements_modelling_parameters():
     return dmc.Grid(
         [
-            dmc.Col(
+            dmc.GridCol(
                 children=[
                     dmc.NumberInput(
                         **NUMBER_INPUT_SETTINGS,
@@ -136,7 +138,7 @@ def retirements_modelling_parameters():
                 ],
                 span=4,
             ),
-            dmc.Col(
+            dmc.GridCol(
                 children=[
                     dmc.NumberInput(
                         **NUMBER_INPUT_SETTINGS,
@@ -145,7 +147,7 @@ def retirements_modelling_parameters():
                         value=3,
                         min=0.05,
                         step=0.05,
-                        precision=2,
+                        decimalScale=2,
                         max=10,
                     ),
                     dcc.Store(id="memory_income_sum", storage_type="local", data=0),
@@ -173,7 +175,7 @@ def retirements_modelling_parameters():
                 ],
                 span=4,
             ),
-            dmc.Col(
+            dmc.GridCol(
                 children=[
                     dmc.NumberInput(
                         **NUMBER_INPUT_SETTINGS,
@@ -181,7 +183,7 @@ def retirements_modelling_parameters():
                         label="Expected returns (%)",
                         value=8,
                         step=0.05,
-                        precision=2,
+                        decimalScale=2,
                     ),
                     dmc.NumberInput(
                         **NUMBER_INPUT_SETTINGS,
@@ -189,7 +191,7 @@ def retirements_modelling_parameters():
                         label="Inflation rate (%)",
                         value=3.5,
                         step=0.05,
-                        precision=2,
+                        decimalScale=2,
                     ),
                     dmc.NumberInput(
                         **NUMBER_INPUT_SETTINGS,
@@ -224,14 +226,13 @@ def calculate_gross_income(annual_income_net: float, tax_free_fraction: float = 
     float
         Annual gross income
     """
-    lower_rate_tax = 0.2
+    tax_rate_lower = 0.2
     personal_allowance = 12_570
     taxable_fraction = 1 - tax_free_fraction
-    tax_payable = ((taxable_fraction * annual_income_net - personal_allowance) * lower_rate_tax) / (
-        1 - taxable_fraction * lower_rate_tax
+    tax_payable = ((taxable_fraction * annual_income_net - personal_allowance) * tax_rate_lower) / (
+        1 - taxable_fraction * tax_rate_lower
     )
-    if tax_payable <= 0:
-        tax_payable = 0
+    tax_payable = max(0, tax_payable)
     return annual_income_net + tax_payable
 
 
@@ -304,11 +305,21 @@ def store_annual_income(monthly_income: int):
     Input(component_id="retirement_annual_contribution", component_property="value"),
 )
 def update_model_graph(target, returns, inflation, contributions):
+    color = px.colors.qualitative.Set1
     net_returns = 1 + (returns - inflation) / 100
     model.calculate_model_value(net_returns=net_returns, contributions=contributions)
     model.set_target(target_value=target)
     return (
-        px.line(model.as_df(), x="Year", y=["Actual Values", "Target", "Model Values"], hover_data=["Age"]),
+        px.line(
+            model.as_df().melt(id_vars=["Year"], value_vars=["Actual Values", "Target", "Model Values"]),
+            x="Year",
+            y="value",
+            color="variable",
+            color_discrete_sequence=[color[1], color[0], color[1]],
+            line_dash="variable",
+            line_dash_map={"Actual Values": "solid", "Target": "dash", "Model Values": "dot"},
+            # hover_data=["Age"],
+        ),
         [
             dmc.Text(f"Target met at age {model.target_met_age} in {model.target_met_year}"),
         ],

@@ -17,21 +17,21 @@ def create_layout():
     return [
         dmc.Container(
             [
-                dmc.Title("Investments", color="blue", size="h3"),
+                dmc.Title("Investments", order=3),
                 dmc.Grid(
                     [
-                        dmc.Col(
+                        dmc.GridCol(
                             [
                                 investments_graph(),
                                 investment_average_returns_table(),
                             ],
                             span=7,
                         ),
-                        dmc.Col(investments_performance_graph(), span=5),
-                        dmc.Col(investments_radiogroup(), span=7),
-                        dmc.Col(investment_performance_table(), span=11),
-                        dmc.Col(investment_mix_bar(), span=7),
-                        dmc.Col(investment_mix_pie(), span=5),
+                        dmc.GridCol(investments_performance_graph(), span=5),
+                        dmc.GridCol(investments_radiogroup(), span=7),
+                        dmc.GridCol(investment_performance_table(), span=11),
+                        dmc.GridCol(investment_mix_bar(), span=7),
+                        dmc.GridCol(investment_mix_pie(), span=5),
                     ]
                 ),
             ],
@@ -210,11 +210,10 @@ def investment_mix_pie():
 def investments_radiogroup():
     return [
         dmc.RadioGroup(
-            investments_radios(),
+            children=dmc.Group(investments_radios()),
             id="investment_performance_radio",
             value="radio_year3_percent",
             size="sm",
-            orientation="horizontal",
         )
     ]
 

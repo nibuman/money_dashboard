@@ -19,10 +19,10 @@ def create_layout():
     return [
         dmc.Container(
             [
-                dmc.Title("Info", color="blue", size="h3"),
+                dmc.Title("Info", order=3),
                 dmc.Grid(
                     [
-                        dmc.Col(
+                        dmc.GridCol(
                             [
                                 platform_info(),
                                 os_info(),
@@ -31,7 +31,7 @@ def create_layout():
                             ],
                             span=11,
                         ),
-                        dmc.Col(data_file_table(), span=3),
+                        dmc.GridCol(data_file_table(), span=3),
                     ]
                 ),
             ],
