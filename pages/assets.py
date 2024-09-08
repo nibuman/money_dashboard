@@ -7,6 +7,7 @@ import utils
 
 assets_time_series = utils.csv_to_dict("assets_time_series.csv")
 latest_values = utils.csv_to_dict("assets_latest_summary.csv")
+asset_names = tuple(latest_values[0].keys())[1:]
 
 money = dash_format.money_format(0)
 column_format = [
@@ -40,11 +41,12 @@ def asset_checkboxgroup():
         size="sm",
         persistence=False,
         persistence_type="local",
+        value=asset_names,  # set all selected at load
     )
 
 
 def asset_checkbox():
-    return [dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in latest_values[0].keys()][1:]
+    return [dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in asset_names]
 
 
 def create_layout():

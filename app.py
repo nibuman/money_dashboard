@@ -1,15 +1,12 @@
 import os
 
+os.environ["REACT_VERSION"] = "18.2.0"  # Required for dmc v0.14, set before dmc and Dash imported
+
 import dash_mantine_components as dmc
 from dash import Dash, dcc
 
-# from money_dashboard import investments, retirement
 from pages import assets, info, investments, retirement, retirement_model
 
-os.environ["REACT_VERSION"] = "18.2.0"  # Required for dmc v0.14
-
-# Initialize the app - incorporate a Dash Mantine theme
-# external_stylesheets = [dmc.theme.DEFAULT_COLORS]
 app = Dash(__name__, external_stylesheets=dmc.styles.ALL, title="Finances")
 server = app.server  # server points to the Flask server behind Dash. Gunicorn needs a reference to this
 app.layout = dmc.MantineProvider(
@@ -34,8 +31,7 @@ app.layout = dmc.MantineProvider(
         value="1",
     )
 )
-# Run the App
+
 if __name__ == "__main__":
-    # Need these settings for the server to be visible to other computers on the network
-    # app.run_server(host="0.0.0.0", port="8050")
-    app.run()
+    # Debug mode will automatically refresh web pages when changes to files are made
+    app.run(debug=True)

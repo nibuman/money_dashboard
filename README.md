@@ -13,6 +13,8 @@
 ## Installation
 
 Installation on Raspberry Pi 2 running **Raspberry Pi OS lite 32 bit 'bookworm'**
+Largely based on the [Digital Ocean guide to deploying Flask apps](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04)
+
 
 1) Install Python 3.12 (build from source)
 ```
@@ -37,6 +39,10 @@ source  venv/bin/activate
 python3 -m pip install dash dash_mantine_components
 
 ```
+For `dash_mantine_components` 0.14, the React version needs to be set to 18.2.0:
+```
+export REACT_VERSION=18.2.0
+```
 At this point, should be able to see the app by running `python3 app.py` and going to `server_ip:8050` from another computer on the network
 
 3) Set up gunicorn service
@@ -57,12 +63,20 @@ User=pi
 Group=www-data
 WorkingDirectory=/home/<username>/money_dashboard
 Environment="PATH=/home/<username>/money_dashboard/venv/bin"
+Environment="REACT_VERSION=18.2.0"
 ExecStart=/home/<username>/money_dashboard/venv/bin/python3 -m gunicorn --workers 3 --bind unix:money_dashboard.sock -m 007 wsgi:server
 
 [Install]
 WantedBy=multi-user.target
 ```
-
+The service can then be started with:
+```
+sudo systemctl start money_dashboard.service
+```
+To start the service at every reboot:
+```
+sudo systemctl enable money_dashboard.service
+```
 ## License
 
 `money-dashboard` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
