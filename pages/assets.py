@@ -1,4 +1,5 @@
 import dash_mantine_components as dmc
+import plotly.colors
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
 
@@ -8,7 +9,7 @@ import utils
 assets_time_series = utils.csv_to_dict("assets_time_series.csv")
 latest_values = utils.csv_to_dict("assets_latest_summary.csv")
 asset_names = tuple(latest_values[0].keys())[1:]
-
+color_scheme = dict(zip(asset_names, plotly.colors.qualitative.G10))
 money = dash_format.money_format(0)
 column_format = [
     {
@@ -87,4 +88,4 @@ def create_layout():
     Input(component_id="asset_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    return px.line(assets_time_series, x="date", y=col_chosen)
+    return px.line(assets_time_series, x="date", y=col_chosen, color_discrete_map=color_scheme)
