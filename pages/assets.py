@@ -47,9 +47,17 @@ def asset_checkboxgroup():
 
 
 def asset_split_barchart():
-    assets_to_display = ["Retirement", "Houses", "Investments", "Savings", "Current Assets"]
+    assets_to_display = [
+        "Retirement",
+        "Houses",
+        "Investments",
+        "Savings",
+        "Current Assets",
+    ]
     assets_with_values = {a: latest_values[0][a] for a in assets_to_display}
-    assets_sorted = dict(sorted(assets_with_values.items(), key=lambda item: item[1], reverse=True))
+    assets_sorted = dict(
+        sorted(assets_with_values.items(), key=lambda item: item[1], reverse=True)
+    )
     return dcc.Graph(
         figure=px.bar(
             x=assets_sorted.keys(),
@@ -61,7 +69,9 @@ def asset_split_barchart():
 
 
 def asset_checkbox():
-    return [dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in asset_names]
+    return [
+        dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in asset_names
+    ]
 
 
 def create_layout():
@@ -88,4 +98,6 @@ def create_layout():
     Input(component_id="asset_overview_checkboxes", component_property="value"),
 )
 def update_graph(col_chosen):
-    return px.line(assets_time_series, x="date", y=col_chosen, color_discrete_map=color_scheme)
+    return px.line(
+        assets_time_series, x="date", y=col_chosen, color_discrete_map=color_scheme
+    )
