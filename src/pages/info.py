@@ -4,11 +4,11 @@ import platform
 import dash_mantine_components as dmc
 from dash import html
 
-import utils
+from utils.utils import DATA_PATH
 
 DATA_OUTPUT_FORMAT = {"font-family": "monospace", "color": "gray", "fontSize": 14}
 
-with open(utils.DATA_PATH / "update_log.json") as f:
+with open(DATA_PATH / "update_log.json") as f:
     update_data = json.load(f)
 
 update_date = update_data["time"]
@@ -59,11 +59,15 @@ def last_update_time():
 
 
 def platform_info():
-    return output_format(f"Machine architecture: {platform.machine()} {platform.architecture()[0]}")
+    return output_format(
+        f"Machine architecture: {platform.machine()} {platform.architecture()[0]}"
+    )
 
 
 def os_info():
-    return output_format(f"Operating system: {platform.freedesktop_os_release()['PRETTY_NAME']}")
+    return output_format(
+        f"Operating system: {platform.freedesktop_os_release()['PRETTY_NAME']}"
+    )
 
 
 def python_info():

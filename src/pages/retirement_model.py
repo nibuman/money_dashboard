@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dcc, html
 
-import utils
+from utils.utils import csv_to_dict
 
 
 class RetirementModel:
@@ -65,11 +65,11 @@ class RetirementModel:
         )
 
 
-summary = utils.csv_to_dict("retirement_summary.csv")
-prices = utils.csv_to_dict("retirement_price_time_series.csv")
-avg_returns = utils.csv_to_dict("retirement_average_returns.csv")
-grouped_assets = utils.csv_to_dict("retirement_grouped_by_type.csv")
-value_model = utils.csv_to_dict("retirement_value_model.csv")
+summary = csv_to_dict("retirement_summary.csv")
+prices = csv_to_dict("retirement_price_time_series.csv")
+avg_returns = csv_to_dict("retirement_average_returns.csv")
+grouped_assets = csv_to_dict("retirement_grouped_by_type.csv")
+value_model = csv_to_dict("retirement_value_model.csv")
 total_value = sum(float(row["value"]) for row in summary)
 model = RetirementModel(value_model)
 dcc.Store(id="memory_value_model", data=value_model)
@@ -86,7 +86,9 @@ def create_layout():
                         dmc.GridCol(
                             [
                                 dmc.GridCol(retirements_modelling_graph(), span=12),
-                                dmc.GridCol(retirements_modelling_parameters(), span=12),
+                                dmc.GridCol(
+                                    retirements_modelling_parameters(), span=12
+                                ),
                             ],
                             span=12,
                         ),
@@ -109,7 +111,12 @@ def retirements_modelling_graph():
     )
 
 
-NUMBER_INPUT_SETTINGS = {"style": {"width": 300}, "type": "number", "persistence_type": "local", "persistence": True}
+NUMBER_INPUT_SETTINGS = {
+    "style": {"width": 300},
+    "type": "number",
+    "persistence_type": "local",
+    "persistence": True,
+}
 
 
 def retirements_modelling_parameters():
@@ -126,8 +133,12 @@ def retirements_modelling_parameters():
                         step=10,
                         max=10000,
                     ),
-                    dcc.Store(id="memory_annual_income_net", storage_type="local", data=0),
-                    dcc.Store(id="memory_annual_income_gross", storage_type="local", data=0),
+                    dcc.Store(
+                        id="memory_annual_income_net", storage_type="local", data=0
+                    ),
+                    dcc.Store(
+                        id="memory_annual_income_gross", storage_type="local", data=0
+                    ),
                     html.Div(
                         id="retirement_annual_income",
                         children=[
@@ -212,7 +223,9 @@ def retirements_modelling_parameters():
     )
 
 
-def calculate_gross_income(annual_income_net: float, tax_free_fraction: float = 0.25) -> float | int:
+def calculate_gross_income(
+    annual_income_net: float, tax_free_fraction: float = 0.25
+) -> float | int:
     """Estimate the gross income required to give a certain net income. Based on current income
     tax bands
 
@@ -229,9 +242,9 @@ def calculate_gross_income(annual_income_net: float, tax_free_fraction: float = 
     tax_rate_lower = 0.2
     personal_allowance = 12_570
     taxable_fraction = 1 - tax_free_fraction
-    tax_payable = ((taxable_fraction * annual_income_net - personal_allowance) * tax_rate_lower) / (
-        1 - taxable_fraction * tax_rate_lower
-    )
+    tax_payable = (
+        (taxable_fraction * annual_income_net - personal_allowance) * tax_rate_lower
+    ) / (1 - taxable_fraction * tax_rate_lower)
     tax_payable = max(0, tax_payable)
     return annual_income_net + tax_payable
 
@@ -311,16 +324,24 @@ def update_model_graph(target, returns, inflation, contributions):
     model.set_target(target_value=target)
     return (
         px.line(
-            model.as_df().melt(id_vars=["Year"], value_vars=["Actual Values", "Target", "Model Values"]),
+            model.as_df().melt(
+                id_vars=["Year"], value_vars=["Actual Values", "Target", "Model Values"]
+            ),
             x="Year",
             y="value",
             color="variable",
             color_discrete_sequence=[color[1], color[0], color[1]],
             line_dash="variable",
-            line_dash_map={"Actual Values": "solid", "Target": "dash", "Model Values": "dot"},
+            line_dash_map={
+                "Actual Values": "solid",
+                "Target": "dash",
+                "Model Values": "dot",
+            },
             # hover_data=["Age"],
         ),
         [
-            dmc.Text(f"Target met at age {model.target_met_age} in {model.target_met_year}"),
+            dmc.Text(
+                f"Target met at age {model.target_met_age} in {model.target_met_year}"
+            ),
         ],
     )

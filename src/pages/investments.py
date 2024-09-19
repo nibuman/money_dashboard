@@ -2,14 +2,19 @@ import dash_mantine_components as dmc
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
 
-import dash_format
-import utils
-from dash_format import money_format, number_format, percent_format, percent_format_pos
+from utils.dash_format import (
+    conditional_format_percent_change,
+    money_format,
+    number_format,
+    percent_format,
+    percent_format_pos,
+)
+from utils.utils import RETURNS_YEARS, csv_to_dict, sort_data
 
-summary = utils.csv_to_dict("investments_summary.csv")
-prices = utils.csv_to_dict("investments_price_time_series.csv")
-avg_returns = utils.csv_to_dict("investments_average_returns.csv")
-grouped_assets = utils.csv_to_dict("investments_grouped_by_type.csv")
+summary = csv_to_dict("investments_summary.csv")
+prices = csv_to_dict("investments_price_time_series.csv")
+avg_returns = csv_to_dict("investments_average_returns.csv")
+grouped_assets = csv_to_dict("investments_grouped_by_type.csv")
 total_value = sum(float(row["value"]) for row in summary)
 
 
@@ -48,8 +53,8 @@ def investment_performance_table():
         id="investment_performance_table",
         page_size=50,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"annualised{y}_percent" for y in utils.RETURNS_YEARS]
+        style_data_conditional=conditional_format_percent_change(
+            [f"annualised{y}_percent" for y in RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -61,34 +66,60 @@ def investment_performance_table():
         },
         tooltip_delay=0,
         css=[
-            {"selector": ".dash-table-tooltip", "rule": "background-color: grey; font-family: monospace; color: white"}
+            {
+                "selector": ".dash-table-tooltip",
+                "rule": "background-color: grey; font-family: monospace; color: white",
+            }
         ],
     )
 
 
 def update_tooltips(col: str):
-    sorted_summary = utils.sort_data(summary, column=col)
+    sorted_summary = sort_data(summary, column=col)
     return [
-        {key: {"value": f"({row['commodity']})\n{row['commodity_name']}"} for key, value in row.items()}
+        {
+            key: {"value": f"({row['commodity']})\n{row['commodity_name']}"}
+            for key, value in row.items()
+        }
         for row in sorted_summary
     ]
 
 
 def update_table(col: str):
-    sorted_summary = utils.sort_data(summary, column=col)
+    sorted_summary = sort_data(summary, column=col)
     return sorted_summary
 
 
 def investment_performance_columns():
     commodity = {"id": "commodity", "name": "Commodity"}
-    latest = {"id": "latest_price", "name": "Latest Price", "type": "numeric", "format": money_format(2)}
-    quantity = {"id": "quantity", "name": "Quantity", "type": "numeric", "format": number_format(1)}
+    latest = {
+        "id": "latest_price",
+        "name": "Latest Price",
+        "type": "numeric",
+        "format": money_format(2),
+    }
+    quantity = {
+        "id": "quantity",
+        "name": "Quantity",
+        "type": "numeric",
+        "format": number_format(1),
+    }
     identifier = {"id": "commodity_id", "name": "ISIN"}
     ocf = {"id": "commodity_ocf", "name": "ocf"}
-    value = {"id": "value", "name": "Value", "type": "numeric", "format": money_format(0)}
+    value = {
+        "id": "value",
+        "name": "Value",
+        "type": "numeric",
+        "format": money_format(0),
+    }
     returns = []
-    percent_value = {"id": "percent_value", "name": "Value (%)", "type": "numeric", "format": percent_format(1)}
-    for y in reversed(utils.RETURNS_YEARS):
+    percent_value = {
+        "id": "percent_value",
+        "name": "Value (%)",
+        "type": "numeric",
+        "format": percent_format(1),
+    }
+    for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
                 {
@@ -99,7 +130,16 @@ def investment_performance_columns():
                 },
             ]
         )
-    return [commodity, latest, identifier, ocf, *returns, quantity, value, percent_value]
+    return [
+        commodity,
+        latest,
+        identifier,
+        ocf,
+        *returns,
+        quantity,
+        value,
+        percent_value,
+    ]
 
 
 #  Average returns table
@@ -110,8 +150,8 @@ def investment_average_returns_table():
         id="investment_average_returns_table",
         page_size=2,
         style_table={"overflowX": "auto"},
-        style_data_conditional=dash_format.conditional_format_percent_change(
-            [f"year{y}_percent" for y in utils.RETURNS_YEARS]
+        style_data_conditional=conditional_format_percent_change(
+            [f"year{y}_percent" for y in RETURNS_YEARS]
         ),
         style_cell={
             "height": "auto",
@@ -126,10 +166,15 @@ def investment_average_returns_table():
 
 def average_returns_columns():
     returns = []
-    for y in reversed(utils.RETURNS_YEARS):
+    for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
-                {"id": f"year{y}", "name": f"{y} Year Returns", "type": "numeric", "format": percent_format_pos(1)},
+                {
+                    "id": f"year{y}",
+                    "name": f"{y} Year Returns",
+                    "type": "numeric",
+                    "format": percent_format_pos(1),
+                },
             ]
         )
     return returns
@@ -137,21 +182,29 @@ def average_returns_columns():
 
 #  Line graph of individual stock performance
 def investments_graph():
-    return dcc.Graph(figure=px.line(prices, x="date", y="AZN"), id="investments_price_graph")
+    return dcc.Graph(
+        figure=px.line(prices, x="date", y="AZN"), id="investments_price_graph"
+    )
 
 
 #  Horizontal bar chart of performance comparisons
 def investments_performance_graph():
     return [
         dcc.Graph(
-            figure=px.bar(summary, x="value", y="commodity", title="Long-Form Input", orientation="h"),
+            figure=px.bar(
+                summary,
+                x="value",
+                y="commodity",
+                title="Long-Form Input",
+                orientation="h",
+            ),
             id="performance_bar_chart",
         )
     ]
 
 
 def update_bar_chart(col):
-    sorted_summary = utils.sort_data(summary, column=col, sort_ascending=True)
+    sorted_summary = sort_data(summary, column=col, sort_ascending=True)
     if col == "value":
         fig = px.bar(
             sorted_summary,
@@ -220,7 +273,8 @@ def investments_radiogroup():
 
 def investments_radios() -> list[dmc.Radio]:
     radios = [
-        dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent") for y in reversed(utils.RETURNS_YEARS)
+        dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent")
+        for y in reversed(RETURNS_YEARS)
     ]
     radios.extend([dmc.Radio(label="Current Value", value="radio_value")])
     return radios
@@ -229,19 +283,24 @@ def investments_radios() -> list[dmc.Radio]:
 #  Callbacks
 @callback(
     Output(component_id="investments_price_graph", component_property="figure"),
-    # Output(component_id="investments_price_graph", component_property="title"),
-    Input(component_id="investment_performance_table", component_property="active_cell"),
+    Input(
+        component_id="investment_performance_table", component_property="active_cell"
+    ),
     Input("investment_performance_radio", "value"),
 )
 def update_graph(active_cell, sort_col):
     col = sort_col.removeprefix("radio_")
-    sorted_summary = utils.sort_data(summary, column=col)
+    sorted_summary = sort_data(summary, column=col)
     if active_cell:
         data_row = active_cell["row"]
         cell_value = sorted_summary[data_row]["commodity"]
     else:
         cell_value = "AZN"
-    title = next(row["commodity_name"] for row in sorted_summary if row["commodity"] == cell_value)
+    title = next(
+        row["commodity_name"]
+        for row in sorted_summary
+        if row["commodity"] == cell_value
+    )
     fig = px.line(prices, x="date", y=cell_value, title=title)
     return fig
 

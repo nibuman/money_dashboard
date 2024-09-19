@@ -3,14 +3,15 @@ import plotly.colors
 import plotly.express as px
 from dash import Input, Output, callback, dash_table, dcc
 
-import dash_format
-import utils
+from data.ids import ID
+from utils.dash_format import money_format
+from utils.utils import csv_to_dict
 
-assets_time_series = utils.csv_to_dict("assets_time_series.csv")
-latest_values = utils.csv_to_dict("assets_latest_summary.csv")
+assets_time_series = csv_to_dict("assets_time_series.csv")
+latest_values = csv_to_dict("assets_latest_summary.csv")
 asset_names = tuple(latest_values[0].keys())[1:]
 color_scheme = dict(zip(asset_names, plotly.colors.qualitative.G10))
-money = dash_format.money_format(0)
+money = money_format(0)
 column_format = [
     {
         "id": i,
@@ -38,7 +39,7 @@ def asset_graph():
 def asset_checkboxgroup():
     return dmc.CheckboxGroup(
         children=dmc.Stack(asset_checkbox()),
-        id="asset_overview_checkboxes",
+        id=ID.ASSET_CHECKBOX_GROUP,
         size="sm",
         persistence=False,
         persistence_type="local",
@@ -95,7 +96,10 @@ def create_layout():
 
 @callback(
     Output(component_id="asset_overview_graph", component_property="figure"),
-    Input(component_id="asset_overview_checkboxes", component_property="value"),
+    Input(
+        component_id=ID.ASSET_CHECKBOX_GROUP,
+        component_property="value",
+    ),
 )
 def update_graph(col_chosen):
     return px.line(

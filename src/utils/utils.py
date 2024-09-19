@@ -4,8 +4,8 @@ import math
 import pathlib
 from functools import partial
 
-BASE_PATH = pathlib.Path(__file__).parent
-DATA_PATH = BASE_PATH / "data"
+BASE_PATH = pathlib.Path(__file__).parents[1]
+DATA_PATH = BASE_PATH.parent / "data"
 START_DATE = datetime.datetime(year=2018, month=1, day=1, tzinfo=datetime.UTC)
 CURRENT_DATE = datetime.datetime.now(tz=datetime.UTC)
 RETURNS_YEARS = [1, 3, 5]
@@ -13,7 +13,9 @@ RETURNS_YEARS = [1, 3, 5]
 table_data = list[dict[str, str | float]]
 
 
-def sort_data(data: table_data, *, column: str, sort_ascending: bool = False) -> table_data:
+def sort_data(
+    data: table_data, *, column: str, sort_ascending: bool = False
+) -> table_data:
     sort_key = partial(_sort_key, col=column)
     return sorted(data, key=sort_key, reverse=not sort_ascending)
 
