@@ -33,13 +33,13 @@ def asset_table():
 
 
 def asset_graph():
-    return dcc.Graph(figure={}, id="asset_overview_graph")
+    return dcc.Graph(figure={}, id=ID.ASSETS_OVERVIEW_GRAPH)
 
 
 def asset_checkboxgroup():
     return dmc.CheckboxGroup(
         children=dmc.Stack(asset_checkbox()),
-        id=ID.ASSET_CHECKBOX_GROUP,
+        id=ID.ASSETS_CHECKBOX_GROUP,
         size="sm",
         persistence=False,
         persistence_type="local",
@@ -65,7 +65,7 @@ def asset_split_barchart():
             y=assets_sorted.values(),
             title="Current Asset Mix",
         ),
-        id="asset_mix_bar",
+        id=ID.ASSETS_MIX_BAR,
     )
 
 
@@ -95,9 +95,9 @@ def create_layout():
 
 
 @callback(
-    Output(component_id="asset_overview_graph", component_property="figure"),
+    Output(component_id=ID.ASSETS_OVERVIEW_GRAPH, component_property="figure"),
     Input(
-        component_id=ID.ASSET_CHECKBOX_GROUP,
+        component_id=ID.ASSETS_CHECKBOX_GROUP,
         component_property="value",
     ),
 )

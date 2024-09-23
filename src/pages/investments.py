@@ -1,7 +1,11 @@
+from typing import Any
+
 import dash_mantine_components as dmc
 import plotly.express as px
+import plotly.graph_objects
 from dash import Input, Output, callback, dash_table, dcc
 
+from data.ids import ID
 from utils.dash_format import (
     conditional_format_percent_change,
     money_format,
@@ -9,8 +13,9 @@ from utils.dash_format import (
     percent_format,
     percent_format_pos,
 )
-from utils.utils import RETURNS_YEARS, csv_to_dict, sort_data
+from utils.utils import RETURNS_YEARS, TableData, csv_to_dict, sort_data
 
+type FormattingData = list[dict[str, Any]]
 summary = csv_to_dict("investments_summary.csv")
 prices = csv_to_dict("investments_price_time_series.csv")
 avg_returns = csv_to_dict("investments_average_returns.csv")
@@ -32,7 +37,7 @@ def create_layout():
                             ],
                             span=7,
                         ),
-                        dmc.GridCol(investments_performance_graph(), span=5),
+                        dmc.GridCol(investments_performance_bar_chart(), span=5),
                         dmc.GridCol(investments_radiogroup(), span=7),
                         dmc.GridCol(investment_performance_table(), span=11),
                         dmc.GridCol(investment_mix_bar(), span=7),
@@ -45,12 +50,12 @@ def create_layout():
     ]
 
 
-#  Investment performance table
-def investment_performance_table():
+def investment_performance_table() -> dash_table.DataTable:
+    """The main table that lists each commodity and associated prices / values / changes"""
     return dash_table.DataTable(
         data=summary,
         columns=investment_performance_columns(),
-        id="investment_performance_table",
+        id=ID.INVESTMENTS_PERFORMANCE_TABLE,
         page_size=50,
         style_table={"overflowX": "auto"},
         style_data_conditional=conditional_format_percent_change(
@@ -74,7 +79,9 @@ def investment_performance_table():
     )
 
 
-def update_tooltips(col: str):
+def update_tooltips(col: str) -> FormattingData:
+    """Provide updated tooltips for the investments performance table based on what the table has
+    been sorted by"""
     sorted_summary = sort_data(summary, column=col)
     return [
         {
@@ -85,12 +92,13 @@ def update_tooltips(col: str):
     ]
 
 
-def update_table(col: str):
-    sorted_summary = sort_data(summary, column=col)
-    return sorted_summary
+def update_table(col: str) -> TableData:
+    """Return the updated data for the investments performance table based the selected sort value"""
+    return sort_data(summary, column=col)
 
 
-def investment_performance_columns():
+def investment_performance_columns() -> FormattingData:
+    """Returns a list of the columns for the datatable with the formatting information for each"""
     commodity = {"id": "commodity", "name": "Commodity"}
     latest = {
         "id": "latest_price",
@@ -112,13 +120,13 @@ def investment_performance_columns():
         "type": "numeric",
         "format": money_format(0),
     }
-    returns = []
     percent_value = {
         "id": "percent_value",
         "name": "Value (%)",
         "type": "numeric",
         "format": percent_format(1),
     }
+    returns = []
     for y in reversed(RETURNS_YEARS):
         returns.extend(
             [
@@ -142,12 +150,12 @@ def investment_performance_columns():
     ]
 
 
-#  Average returns table
-def investment_average_returns_table():
+def investment_average_returns_table() -> dash_table.DataTable:
+    """Display the average returns for the whole investment portfolio"""
     return dash_table.DataTable(
         data=avg_returns,
         columns=average_returns_columns(),
-        id="investment_average_returns_table",
+        id=ID.INVESTMENTS_AVERAGE_RETURNS_TABLE,
         page_size=2,
         style_table={"overflowX": "auto"},
         style_data_conditional=conditional_format_percent_change(
@@ -180,33 +188,33 @@ def average_returns_columns():
     return returns
 
 
-#  Line graph of individual stock performance
-def investments_graph():
+def investments_graph() -> dcc.Graph:
+    """Line graph of individual stock / fund performance"""
     return dcc.Graph(
-        figure=px.line(prices, x="date", y="AZN"), id="investments_price_graph"
+        figure=px.line(prices, x="date", y="AZN"), id=ID.INVESTMENTS_PRICE_GRAPH
     )
 
 
-#  Horizontal bar chart of performance comparisons
-def investments_performance_graph():
-    return [
-        dcc.Graph(
-            figure=px.bar(
-                summary,
-                x="value",
-                y="commodity",
-                title="Long-Form Input",
-                orientation="h",
-            ),
-            id="performance_bar_chart",
-        )
-    ]
+def investments_performance_bar_chart() -> dcc.Graph:
+    """Horizontal bar chart of performance comparisons"""
+    return dcc.Graph(
+        figure=px.bar(
+            summary,
+            x="value",
+            y="commodity",
+            title="Long-Form Input",
+            orientation="h",
+        ),
+        id=ID.INVESTMENTS_PERFORMANCE_BAR_CHART,
+    )
 
 
-def update_bar_chart(col):
+def update_bar_chart(col) -> plotly.graph_objects.Figure:
+    """Returns a new Figure object for the investments performance bar chart based on either the
+    value or the percentage change of the investments"""
     sorted_summary = sort_data(summary, column=col, sort_ascending=True)
     if col == "value":
-        fig = px.bar(
+        return px.bar(
             sorted_summary,
             x="value",
             y="commodity",
@@ -226,52 +234,47 @@ def update_bar_chart(col):
     return fig
 
 
-# Investment mix bar chart
-def investment_mix_bar():
-    return [
-        dcc.Graph(
-            figure=px.bar(
-                grouped_assets,
-                x="commodity_type",
-                y=["type_value", "ideal_mix"],
-                title="Investment Mix - Current v. Ideal",
-                barmode="group",
-            ),
-            id="investment_mix_bar",
-        )
-    ]
+def investment_mix_bar() -> dcc.Graph:
+    """Compares the relative values of different types of investment, compared to an ideal mixture"""
+    return dcc.Graph(
+        figure=px.bar(
+            grouped_assets,
+            x="commodity_type",
+            y=["type_value", "ideal_mix"],
+            title="Investment Mix - Current v. Ideal",
+            barmode="group",
+        ),
+        id=ID.INVESTMENTS_MIX_BAR,
+    )
 
 
-#  Investment mix pie chart
-def investment_mix_pie():
-    return [
-        dcc.Graph(
-            figure=px.pie(
-                grouped_assets,
-                names="commodity_type",
-                values="type_value",
-                title=f"Current mix. Total value = £{total_value:,.0f}",
-                hole=0.3,
-                hover_data="commodities",
-            ),
-            id="investment_mix_pie",
-        )
-    ]
+def investment_mix_pie() -> dcc.Graph:
+    """Pie chart of the current mix of investment types"""
+    return dcc.Graph(
+        figure=px.pie(
+            grouped_assets,
+            names="commodity_type",
+            values="type_value",
+            title=f"Current mix. Total value = £{total_value:,.0f}",
+            hole=0.3,
+            hover_data="commodities",
+        ),
+        id=ID.INVESTMENTS_MIX_PIE,
+    )
 
 
-#  Radio buttons
-def investments_radiogroup():
-    return [
-        dmc.RadioGroup(
-            children=dmc.Group(investments_radios()),
-            id="investment_performance_radio",
-            value="radio_year3_percent",
-            size="sm",
-        )
-    ]
+def investments_radiogroup() -> dmc.RadioGroup:
+    """Group of radio buttons for changing the ordering of the datatable and graphs"""
+    return dmc.RadioGroup(
+        children=dmc.Group(investments_radios()),
+        id=ID.INVESTMENTS_PERFORMANCE_RADIO,
+        value="radio_year3_percent",
+        size="sm",
+    )
 
 
 def investments_radios() -> list[dmc.Radio]:
+    """Return a list of radio buttons that form part of the radio group"""
     radios = [
         dmc.Radio(label=f"{y} Year Returns", value=f"radio_year{y}_percent")
         for y in reversed(RETURNS_YEARS)
@@ -280,15 +283,14 @@ def investments_radios() -> list[dmc.Radio]:
     return radios
 
 
-#  Callbacks
 @callback(
-    Output(component_id="investments_price_graph", component_property="figure"),
-    Input(
-        component_id="investment_performance_table", component_property="active_cell"
-    ),
-    Input("investment_performance_radio", "value"),
+    Output(ID.INVESTMENTS_PRICE_GRAPH, "figure"),
+    Input(ID.INVESTMENTS_PERFORMANCE_TABLE, "active_cell"),
+    Input(ID.INVESTMENTS_PERFORMANCE_RADIO, "value"),
 )
-def update_graph(active_cell, sort_col):
+def update_graph(active_cell, sort_col) -> plotly.graph_objects.Figure:
+    """Callback to update the investment prices graph based on the selection of the radio
+    buttons or selecting a row in the main table"""
     col = sort_col.removeprefix("radio_")
     sorted_summary = sort_data(summary, column=col)
     if active_cell:
@@ -306,12 +308,15 @@ def update_graph(active_cell, sort_col):
 
 
 @callback(
-    Output("performance_bar_chart", "figure"),
-    Output("investment_performance_table", "data"),
-    Output("investment_performance_table", "tooltip_data"),
-    Input("investment_performance_radio", "value"),
+    Output(ID.INVESTMENTS_PERFORMANCE_BAR_CHART, "figure"),
+    Output(ID.INVESTMENTS_PERFORMANCE_TABLE, "data"),
+    Output(ID.INVESTMENTS_PERFORMANCE_TABLE, "tooltip_data"),
+    Input(ID.INVESTMENTS_PERFORMANCE_RADIO, "value"),
 )
-def radio_button_actions(sort_col):
+def radio_button_actions(
+    sort_col,
+) -> tuple[plotly.graph_objects.Figure, TableData, FormattingData]:
+    """Callback to update the main table and bar chart based on the selection of the radio buttons"""
     if sort_col == "radio_value":
         col = "value"
     else:

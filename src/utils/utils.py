@@ -10,12 +10,12 @@ START_DATE = datetime.datetime(year=2018, month=1, day=1, tzinfo=datetime.UTC)
 CURRENT_DATE = datetime.datetime.now(tz=datetime.UTC)
 RETURNS_YEARS = [1, 3, 5]
 
-table_data = list[dict[str, str | float]]
+type TableData = list[dict[str, str | float]]
 
 
 def sort_data(
-    data: table_data, *, column: str, sort_ascending: bool = False
-) -> table_data:
+    data: TableData, *, column: str, sort_ascending: bool = False
+) -> TableData:
     sort_key = partial(_sort_key, col=column)
     return sorted(data, key=sort_key, reverse=not sort_ascending)
 
@@ -28,7 +28,7 @@ def _sort_key(row: dict[str, float | str], col: str) -> float | str:
         return value
 
 
-def csv_to_dict(file_name: str) -> table_data:
+def csv_to_dict(file_name: str) -> TableData:
     with open(DATA_PATH / file_name) as f:
         csv_data = list(csv.DictReader(f))
     for row in csv_data:
