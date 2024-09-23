@@ -23,7 +23,8 @@ column_format = [
 ][1:]
 
 
-def asset_table():
+def asset_table() -> dash_table.DataTable:
+    """Table showing the current value of the asset types"""
     return dash_table.DataTable(
         data=latest_values,
         columns=column_format,
@@ -32,11 +33,13 @@ def asset_table():
     )
 
 
-def asset_graph():
+def asset_graph() -> dcc.Graph:
+    """Line chart of all asset types"""
     return dcc.Graph(figure={}, id=ID.ASSETS_OVERVIEW_GRAPH)
 
 
-def asset_checkboxgroup():
+def asset_checkboxgroup() -> dmc.CheckboxGroup:
+    """Checkbox group to select which assets to display"""
     return dmc.CheckboxGroup(
         children=dmc.Stack(asset_checkbox()),
         id=ID.ASSETS_CHECKBOX_GROUP,
@@ -47,7 +50,8 @@ def asset_checkboxgroup():
     )
 
 
-def asset_split_barchart():
+def asset_split_barchart() -> dcc.Graph:
+    """Bar chart showing the current split of asset types"""
     assets_to_display = [
         "Retirement",
         "Houses",
@@ -69,13 +73,15 @@ def asset_split_barchart():
     )
 
 
-def asset_checkbox():
+def asset_checkbox() -> list[dmc.Checkbox]:
+    """Checkboxes to allow selecting asset types to display in line chart"""
     return [
         dmc.Checkbox(label=asset_name, value=asset_name) for asset_name in asset_names
     ]
 
 
-def create_layout():
+def layout() -> list:
+    """Main layout of Assets tab"""
     return [
         dmc.Container(
             [
@@ -101,7 +107,8 @@ def create_layout():
         component_property="value",
     ),
 )
-def update_graph(col_chosen):
+def update_graph(col_chosen) -> plotly.graph_objs.Figure:
+    """Callback to update line chart when the check boxes are interacted with"""
     return px.line(
         assets_time_series, x="date", y=col_chosen, color_discrete_map=color_scheme
     )

@@ -23,7 +23,8 @@ grouped_assets = csv_to_dict("investments_grouped_by_type.csv")
 total_value = sum(float(row["value"]) for row in summary)
 
 
-def create_layout():
+def layout() -> list:
+    """Overall layout of Investments tab"""
     return [
         dmc.Container(
             [

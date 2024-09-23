@@ -1,14 +1,18 @@
 import os
 
-os.environ["REACT_VERSION"] = "18.2.0"  # Required for dmc v0.14, set before dmc and Dash imported
+os.environ["REACT_VERSION"] = (
+    "18.2.0"  # Required for dmc v0.14, set before dmc and Dash imported
+)
 
 import dash_mantine_components as dmc
-from dash import Dash, dcc
+from dash import Dash
 
 from pages import assets, info, investments, retirement, retirement_model
 
 app = Dash(__name__, external_stylesheets=dmc.styles.ALL, title="Finances")
-server = app.server  # server points to the Flask server behind Dash. Gunicorn needs a reference to this
+server = (
+    app.server
+)  # server points to the Flask server behind Dash. Gunicorn needs a reference to this
 app.layout = dmc.MantineProvider(
     dmc.Tabs(
         [
@@ -21,12 +25,11 @@ app.layout = dmc.MantineProvider(
                     dmc.TabsTab("Info", value="5"),
                 ]
             ),
-            dmc.TabsPanel(assets.create_layout(), value="1"),
-            dmc.TabsPanel(investments.create_layout(), value="2"),
+            dmc.TabsPanel(assets.layout(), value="1"),
+            dmc.TabsPanel(investments.layout(), value="2"),
             dmc.TabsPanel(retirement.create_layout(), value="3"),
             dmc.TabsPanel(retirement_model.create_layout(), value="4"),
             dmc.TabsPanel(info.create_layout(), value="5"),
-            dcc.Store(id="sorted_data"),
         ],
         value="1",
     )
