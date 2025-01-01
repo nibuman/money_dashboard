@@ -1,0 +1,16 @@
+{
+    "files": [
+        "investments_price_time_series.csv",
+        "investments_average_returns.csv",
+        "investments_grouped_by_type.csv",
+        "investments_summary.csv",
+        "retirement_price_time_series.csv",
+        "retirement_average_returns.csv",
+        "retirement_grouped_by_type.csv",
+        "retirement_summary.csv",
+        "retirement_value_model.csv",
+        "assets_time_series.csv",
+        "assets_latest_summary.csv"
+    ],
+    "time": "2024-12-20 21:01:33.163728+00:00"
+}
